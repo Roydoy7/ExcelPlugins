@@ -1,0 +1,182 @@
+﻿<Window x:Class="ExcelToPaper.Views.ExcelToPaperDetailForm"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ExcelToPaper.Views"
+             xmlns:dataConvertersLocal="clr-namespace:ExcelToPaper.DataConverters"
+             xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+             mc:Ignorable="d" 
+             Title="ExcelToPaperDetailForm" Height="700" Width="1000" WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Material Design -->
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.Green.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Green.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <dataConvertersLocal:PathToFileNameDataConverter x:Key="PathToFileNameDataConverter"/>
+            <dataConvertersLocal:XlPaperSizeDataConverter x:Key="PaperSizeDataConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+
+        <!--Top section-->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width=".7*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!--Top left-->
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Text="プリンター"/>
+                <ComboBox VerticalAlignment="Center" MinWidth="300" ItemsSource="{Binding InstalledPrinters}" SelectedItem="{Binding SelectedPrinter}"/>
+            </StackPanel>
+
+            <!--Top right-->
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="キーワードで選択"/>
+                <TextBox Margin="10 0 0 0" Width="200" VerticalAlignment="Center" Text="{Binding Keyword}"/>
+                <Button Margin="10 0 0 0" Padding="0" Width="50" VerticalAlignment="Center" Content="選択" Command="{Binding SelectByKeywordCommand}" ToolTip="キーワードを含むシートを選択する."/>
+                <Button Margin="10 0 0 0" Padding="0" Width="50" VerticalAlignment="Center" Content="排除" Command="{Binding UnSelectByKeywordCommand}" ToolTip="キーワードを含むシートを排除する."/>
+                <Rectangle Margin="10 5 10 5" VerticalAlignment="Stretch" Width="3" StrokeThickness="2" Stroke="Gray"/>
+                <Button Margin="0 0 0 0" Padding="0" Width="50" VerticalAlignment="Center" Content="全選" Command="{Binding SelectAllCommand}" ToolTip="全てのシートを選択する."/>
+                <Button Margin="10 0 0 0" Padding="0" Width="50" VerticalAlignment="Center" Content="クリア" Command="{Binding UnSelectAllCommand}" ToolTip="全てのシートをクリアする."/>
+            </StackPanel>
+        </Grid>
+
+        <!--Middle section-->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width=".7*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!--Middle left-->
+            <ListView Grid.Column="0"
+                      ItemsSource="{Binding ExcelFilePaths}"
+                      SelectedItem="{Binding SelectedFilePath}"
+                      >
+
+                <b:Interaction.Triggers>
+                    <b:EventTrigger EventName="SelectionChanged">
+                        <b:InvokeCommandAction Command="{Binding ExcelFilePathSelectionChanged}"/>
+                    </b:EventTrigger>
+                </b:Interaction.Triggers>
+
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="エクスポートフォルダを開く" Command="{Binding OpenExportFolderCommand}"/>
+                        <MenuItem Header="追加" Command="{Binding AddFilePathCommand}"/>
+                        <MenuItem Header="削除" Command="{Binding DeleteFilePathCommand}"/>
+                    </ContextMenu>
+                </ListView.ContextMenu>
+
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn DisplayMemberBinding="{Binding Converter={StaticResource PathToFileNameDataConverter}}">
+                            <GridViewColumn.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Margin="10 0 5 0" VerticalAlignment="Center" Text="ファイル名"/>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" Margin="5 0 0 0" Padding="0" Width="25" Height="25" Content="+" Command="{Binding AddFilePathCommand}" ToolTip="追加"/>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" Margin="5 0 0 0" Padding="0" Width="25" Height="25" Content="-" Command="{Binding DeleteFilePathCommand}" ToolTip="削除"/>
+                                </StackPanel>
+                            </GridViewColumn.Header>
+                        </GridViewColumn>                        
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <!--Middle right-->
+            <ListView Grid.Column="1"
+                      ItemsSource="{Binding SheetInfos}"
+                      >
+                <ListView.View>
+                    <GridView>
+                        
+                        <GridViewColumn>
+                            <GridViewColumn.Header>
+                                <CheckBox IsChecked="{Binding SelectAllSheet}" />
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox IsChecked="{Binding IsSheetChecked}" Command="{Binding DataContext.SingleSheetCheckedCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        
+                        <GridViewColumn Header="シート名" DisplayMemberBinding="{Binding SheetName}"/>
+                        <GridViewColumn Header="ページ数" DisplayMemberBinding="{Binding Count}"/>
+                        <GridViewColumn Header="ページサイズ" DisplayMemberBinding="{Binding PaperSize,Converter={StaticResource PaperSizeDataConverter}}"/>
+                        
+                        <GridViewColumn Width="200">
+                            <GridViewColumn.Header>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Margin="0 0 0 0" Padding="0" Width="100" Content="詳細情報獲得" Command="{Binding GetDetailInformationCommand}" ToolTip="ページ数とページサイズ情報を獲得する."/>
+                                    <ProgressBar Margin="5 0 0 0"                    
+                                      Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                      Value="{Binding GetDetailProgressValue}"
+                                      IsIndeterminate="True" /> 
+                                </StackPanel>
+                            </GridViewColumn.Header>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock VerticalAlignment="Center" Text="プリント範囲: 始"/>
+                                        <TextBox Margin="5 0 5 0" Width="30" TextAlignment="Center" Text="{Binding StartPage, ValidatesOnDataErrors=True}"/>
+                                        <TextBlock Margin="5 0 0 0" VerticalAlignment="Center" Text="迄"/>
+                                        <TextBox Margin="5 0 5 0" Width="30" TextAlignment="Center" Text="{Binding EndPage, ValidatesOnDataErrors=True}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+
+        <!--Bottom section-->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width=".4*"/>
+                <ColumnDefinition Width="200"/>
+            </Grid.ColumnDefinitions>
+
+            <!--Bottom left-->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" >
+                <ProgressBar Margin="10 0 0 0"                    
+                  Style="{StaticResource MaterialDesignCircularProgressBar}"
+                  Value="{Binding ProgressValue}"
+                  IsIndeterminate="True" />
+                <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="{Binding ProgressMessage}"/>
+            </StackPanel>
+
+            <!--Bottom middle-->
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Text="{Binding SelectedSheetMessage}"/>
+            </StackPanel>
+
+            <!--Bottom right-->
+            <StackPanel Grid.Column="2" HorizontalAlignment="Right" Orientation="Horizontal">                
+                <Button Margin="10 0 10 0" Width="75" VerticalAlignment="Center" Content="Ok" Command="{Binding OkCommand}" IsDefault="True"/>
+                <Button Margin="10 0 10 0" Width="75" VerticalAlignment="Center" Content="Cancel" IsCancel="True"/>
+            </StackPanel>
+
+        </Grid>
+    </Grid>
+</Window>
