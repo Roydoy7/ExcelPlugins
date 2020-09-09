@@ -13,6 +13,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using MaterialDesignThemes.Wpf;
+using System.Threading;
 
 namespace ExcelToPaper.ViewModels
 {
@@ -36,6 +38,14 @@ namespace ExcelToPaper.ViewModels
 
         private static Application mExcel = null;
         private bool mSelectAllSheet;
+        private CancellationTokenSource mCancelTokenSource = null;
+        private PrintSettings mPrintSettings = new PrintSettings();
+        //Export to a single folder
+        public bool ExportToSingleFolder { get; set; } = false;
+        //Attach workbook name before work sheet name
+        public bool AttachWorkbookNameBeforeWorksheet { get; set; } = false;
+        //Cancel button visibility
+        public bool IsCanelButtonVisiable { get; set; } = false;
 
         //A dictionary that contain excel info,
         //the key is path of the excel file,
@@ -52,6 +62,8 @@ namespace ExcelToPaper.ViewModels
         public string SelectedFilePath { get; set; }
         public string SelectedPrinter { get; set; }
         public string ProgressMessage { get; set; }
+        //The single folder path that is used to be exported.
+        public string SingleFolderPath { get; set; }
 
         public string SelectedSheetMessage
         {
@@ -71,7 +83,10 @@ namespace ExcelToPaper.ViewModels
         //Check to select all sheets.
         public bool SelectAllSheet
         {
-            get => mSelectAllSheet;
+            get
+            {
+                return mSelectAllSheet;
+            }
             set
             {
                 mSelectAllSheet = value;
@@ -108,7 +123,7 @@ namespace ExcelToPaper.ViewModels
                 return new List<SheetInfo>();
             }
         }
-
+                
         //On select changed of the first listview, update the datasource of the second listview.
         public ICommand ExcelFilePathSelectionChanged => new DelegateCommand((o) =>
         {
@@ -219,11 +234,33 @@ namespace ExcelToPaper.ViewModels
             NotifyPropertyChanged(nameof(SelectedSheetMessage));
         });
 
+        public ICommand ExportSettingCommand => new DelegateCommand(async (O) => {
+            var vm = new ExcelToPaperExportSelectionViewModel();
+            //Init old value.
+            vm.ExportToSingleFolder = mPrintSettings.ExportToSingleFolder;
+            vm.SingleFolderPath = mPrintSettings.SingleFolderPath;
+            vm.AttachWorkbookNameBeforeWorksheet = mPrintSettings.AttachWorkbookNameBeforeWorksheet;
+            vm.PrintToPaper = mPrintSettings.PrintToPaper;
+            //Show dialog.
+            var result = await DialogHost.Show(vm.View, "Root");
+            var dialogResult = (bool)result;
+            if (!dialogResult) return;
+
+            mPrintSettings.ExportToSingleFolder = vm.ExportToSingleFolder;
+            mPrintSettings.AttachWorkbookNameBeforeWorksheet = vm.AttachWorkbookNameBeforeWorksheet;
+            mPrintSettings.SingleFolderPath = vm.SingleFolderPath;
+            mPrintSettings.PrintToPaper = vm.PrintToPaper;
+        });
+
         public ICommand GetDetailInformationCommand => new DelegateCommand(async (o) =>
         {
-            if (SelectedFilePath.IsNullOrEmpty())
-                return;
+            //Show dialog
+            var vm = new ExcelToPaperGetDetailSelectionViewModel();
+            var result = await DialogHost.Show(vm.View, "MiddleRight");
+            var dialogResult = (bool)result;
+            if (!dialogResult) return;
 
+            //Show progress bar
             GetDetailProgressValue = 0;
             NotifyPropertyChanged(nameof(GetDetailProgressValue));
 
@@ -236,25 +273,62 @@ namespace ExcelToPaper.ViewModels
 
             if (mExcel != null)
             {
-                await CommonMethods.GetWorksheetPageCount(mExcel, SelectedFilePath, SheetInfos, UpdateProgressMessage);
+                if (!vm.GetAllFileDetail)
+                {
+                    if (SelectedFilePath.IsNullOrEmpty())
+                        return;
+                    await CommonMethods.GetWorksheetPageCount(mExcel, SelectedFilePath, SheetInfos, UpdateProgressMessage);
+                }
+                else
+                    foreach (var kvp in ExcelInfos)
+                        await CommonMethods.GetWorksheetPageCount(mExcel, kvp.Key, kvp.Value, UpdateProgressMessage);
             }
 
             GetDetailProgressValue = 100;
             NotifyPropertyChanged(nameof(GetDetailProgressValue));
         });
 
+        public ICommand ExcelToPaperCancelCommand => new DelegateCommand((o) => {
+            if (mCancelTokenSource == null)
+                return;
+            mCancelTokenSource.Cancel();
+        });
+
         public ICommand OkCommand => new DelegateCommand(async (o) =>
         {
+            //Check the cancel token source.
+            if (mCancelTokenSource != null)
+                return;
+
+            //Init cancel token.
+            mCancelTokenSource = new CancellationTokenSource();
+            //Make the cancel button visible.
+            IsCanelButtonVisiable = true;
+            NotifyPropertyChanged(nameof(IsCanelButtonVisiable));
+
             //Set progress to 0 to make the progress bar show
             ProgressValue = 0;
             NotifyPropertyChanged(nameof(ProgressValue));
-
+                        
             //Wait until export finish.
-            await ExcelToPaperMethods.PrintToPaper(SelectedPrinter, ExcelInfos, UpdateProgressMessage);
+            await ExcelToPaperMethods.PrintToPaper(
+                SelectedPrinter,
+                mCancelTokenSource.Token,
+                ExcelInfos, 
+                mPrintSettings,
+                UpdateProgressMessage);
 
             //Set finish message
             ProgressMessage = "完成";
             NotifyPropertyChanged(nameof(ProgressMessage));
+
+            //Dispose cancel token source
+            mCancelTokenSource.Dispose();
+            mCancelTokenSource = null;
+
+            //Make the cancel button invisible.
+            IsCanelButtonVisiable = false;
+            NotifyPropertyChanged(nameof(IsCanelButtonVisiable));
 
             //Wait 5s and clear finish message, hide progress bar
             await Task.Delay(5000);
@@ -262,6 +336,14 @@ namespace ExcelToPaper.ViewModels
             ProgressValue = 100;
             NotifyPropertyChanged(nameof(ProgressMessage));
             NotifyPropertyChanged(nameof(ProgressValue));
+        });
+
+        public ICommand CancelCommand => new DelegateCommand((o) => {
+            //Can not close form when processing a task.
+            if (mCancelTokenSource != null)
+                return;
+            else
+                View.Close();
         });
 
         private void UpdateProgressMessage(string message)

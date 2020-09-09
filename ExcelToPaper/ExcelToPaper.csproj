@@ -1,4 +1,5 @@
-﻿<Project ToolsVersion="16.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <!--
     This section defines project-level properties.
@@ -192,19 +193,29 @@
     <Compile Include="Commands\RibbonCommands.BatchToPaper.cs" />
     <Compile Include="Components\CommonMethods.cs" />
     <Compile Include="Components\ExcelToPaperMethods.cs" />
+    <Compile Include="DataConverters\BooleanNotGateDataConverter.cs" />
     <Compile Include="DataConverters\PathToFileNameDataConverter.cs" />
     <Compile Include="DataConverters\XlPaperSizeDataConverter.cs" />
+    <Compile Include="DataModels\PrintSettings.cs" />
     <Compile Include="DataModels\SheetInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ViewModels\ExcelToPaperDetailFormViewModel.cs" />
+    <Compile Include="ViewModels\ExcelToPaperExportSelectionViewModel.cs" />
     <Compile Include="ViewModels\ExcelToPaperFormViewModel.cs" />
+    <Compile Include="ViewModels\ExcelToPaperGetDetailSelectionViewModel.cs" />
     <Compile Include="Views\ExcelToPaperDetailForm.xaml.cs">
       <DependentUpon>ExcelToPaperDetailForm.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ExcelToPaperExportSelectionView.xaml.cs">
+      <DependentUpon>ExcelToPaperExportSelectionView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ExcelToPaperForm.xaml.cs">
       <DependentUpon>ExcelToPaperForm.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ExcelToPaperGetDetailSelectionView.xaml.cs">
+      <DependentUpon>ExcelToPaperGetDetailSelectionView.xaml</DependentUpon>
     </Compile>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -252,7 +263,15 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\ExcelToPaperExportSelectionView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ExcelToPaperForm.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ExcelToPaperGetDetailSelectionView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -268,10 +287,10 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>ExcelToPaper_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestCertificateThumbprint>0C548DE6B35A0A3BF39E3FB1145FD7AC552DB127</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>8389CDE27AA4EACF303DCC539A065F2BB6E22BF9</ManifestCertificateThumbprint>
+    <ManifestKeyFile>ExcelToPaper_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <!-- Include the build rules for a C# project. -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

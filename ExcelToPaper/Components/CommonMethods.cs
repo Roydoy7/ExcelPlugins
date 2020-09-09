@@ -49,7 +49,7 @@ namespace ExcelToPaper.Components
             await Task.Run(async () => {
                 try
                 {
-                    var wb = excel.Workbooks.Open(filePath);
+                    var wb = excel.Workbooks.Open(Filename: filePath, ReadOnly: true);
                     foreach (Worksheet ws in wb.Worksheets)
                     {
                         if (sheetInfos.Any(x => x.SheetName == ws.Name))
