@@ -28,7 +28,7 @@
 
         <StackPanel Grid.Row="1" VerticalAlignment="Center" Orientation="Horizontal">
             <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Text="Excelフォルダ"/>
-            <TextBox Margin="10 0 10 0" Width="320" VerticalAlignment="Center" Text="{Binding ExcelFolderPath}"/>
+            <TextBox Margin="10 0 10 0" Width="320" VerticalAlignment="Center" Text="{Binding ExcelFolderPath,UpdateSourceTrigger=PropertyChanged}"/>
             <Button Margin="10 0 10 0" Width="75" Content="開く" Command="{Binding OpenExcelCommand}"/>
         </StackPanel>
 

@@ -287,7 +287,7 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>0C548DE6B35A0A3BF39E3FB1145FD7AC552DB127</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>8389CDE27AA4EACF303DCC539A065F2BB6E22BF9</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>ExcelToPaper_TemporaryKey.pfx</ManifestKeyFile>
