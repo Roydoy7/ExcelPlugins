@@ -8,7 +8,7 @@
              xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:localDataConverters="clr-namespace:ExcelToPaper.DataConverters"
              mc:Ignorable="d" 
-             Height="300" Width="530">
+             Height="350" Width="530">
 
     <UserControl.Resources>
         <ResourceDictionary>
@@ -28,13 +28,16 @@
             <RowDefinition Height="20"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="2*"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <GroupBox Grid.Row="1" Margin="10" Header="出力設定" Style="{x:Null}">
             <StackPanel Orientation="Horizontal">
-                <RadioButton Margin="20 0 10 0" VerticalAlignment="Center" GroupName="1" Content="紙印刷" IsChecked="{Binding PrintToPaper}"/>
-                <RadioButton Margin="10 0 10 0" VerticalAlignment="Center" GroupName="1" Content="Pdf出力" IsChecked="{Binding PrintToPaper,Converter={StaticResource BooleanNotGateDataConverter}}"/>
+                <RadioButton Margin="20 0 10 0" VerticalAlignment="Center" GroupName="0" Content="紙印刷" 
+                             IsChecked="{Binding PrintToPaper}"/>
+                <RadioButton Margin="10 0 10 0" VerticalAlignment="Center" GroupName="0" Content="Pdf出力" 
+                             IsChecked="{Binding PrintToPdf}"/>
             </StackPanel>
         </GroupBox>
 
@@ -45,25 +48,45 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <StackPanel Grid.Row="0" Orientation="Horizontal">
-                    <RadioButton Margin="20 0 10 0" VerticalAlignment="Center" GroupName="0" Content="個別フォルダに出力する" IsChecked="{Binding ExportToSingleFolder, Converter={StaticResource BooleanNotGateDataConverter}}"/>
+                    <RadioButton Margin="20 0 10 0" VerticalAlignment="Center" GroupName="1" Content="個別フォルダに出力する" 
+                                 IsChecked="{Binding ExportToSeparateFolder}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal">
-                    <RadioButton Margin="20 0 10 0" VerticalAlignment="Center" GroupName="0" Content="一つフォルダに出力する" IsChecked="{Binding ExportToSingleFolder}"/>
+                    <RadioButton Margin="20 0 10 0" VerticalAlignment="Center" GroupName="1" Content="一つフォルダに出力する" 
+                                 IsChecked="{Binding ExportToSingleFolder}"/>
                     <StackPanel Margin="20 0 0 0">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="パス"/>
                             <TextBox Margin="10 0 0 0" VerticalAlignment="Center" Width="180" Text="{Binding SingleFolderPath}"/>
-                            <Button Style="{DynamicResource MaterialDesignRaisedAccentButton}" Margin="10 0 0 0" Padding="0" VerticalAlignment="Center" Width="40" Height="25" Content="開く" Command="{Binding OpenFolderCommand}"/>
+                            <Button Style="{DynamicResource MaterialDesignRaisedAccentButton}" 
+                                    Margin="10 0 0 0" Padding="0" VerticalAlignment="Center" Width="40" Height="25" Content="開く" 
+                                    Command="{Binding OpenFolderCommand}"/>
                         </StackPanel>
                         <CheckBox Margin="10 10 10 0" VerticalAlignment="Center" Content="シート名の前にワークブック名付" IsChecked="{Binding AttachWorkbookNameBeforeWorksheet}" ToolTip="例:ワークブックはWorkbook.xlsx、シート名はSheet1、出力のPdf名はWorkbook_Sheet1.Pdf"/>
                     </StackPanel>
                 </StackPanel>
+
             </Grid>                
         </GroupBox>
 
+        <GroupBox Grid.Row="3" Margin="10" Header="Pdfマージ設定" Style="{x:Null}">
+            <StackPanel Grid.Row="2" Orientation="Horizontal">
+                <RadioButton Margin="20 10 10 10" VerticalAlignment="Center" GroupName="2" Content="しない"
+                             IsChecked="{Binding MergeNothing}"/>
+                <RadioButton Margin="20 10 10 10" VerticalAlignment="Center" GroupName="2" Content="一つPDFにマージする" 
+                             IsChecked="{Binding MergeToFileSeparately}"
+                             ToolTip="同じワークブックのシートを一つPdfにマージする。"/>
+                <CheckBox Margin="10 10 10 10" VerticalAlignment="Center" Content="マージ用のネタを削除する"
+                          IsChecked="{Binding MergeDeleteOriginFile}"/>
+                <!--<RadioButton Margin="20 10 10 10" VerticalAlignment="Center" GroupName="2" Content="全てを一つPDFにマージする"
+                             IsChecked="{Binding MergeToSingleFile}"
+                             ToolTip="全てのワークブックのシートを一つPdfにマージする。"/>-->
+            </StackPanel>
+        </GroupBox>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <TextBlock VerticalAlignment="Center" Text="{Binding ErrorMessage}"/>
             <Button Style="{DynamicResource MaterialDesignRaisedAccentButton}" Margin="10 0 0 0" Padding="0" VerticalAlignment="Center" Width="75" Content="Ok" Command="{Binding OkCommand}">
                 <Button.CommandParameter>

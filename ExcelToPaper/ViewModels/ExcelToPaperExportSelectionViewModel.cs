@@ -18,7 +18,17 @@ namespace ExcelToPaper.ViewModels
             get { return PrintSettings.PrintToPaper; }
             set { PrintSettings.PrintToPaper = value; }
         }
-        //Export to a single folder
+        public bool PrintToPdf
+        {
+            get { return PrintSettings.PrintToPdf; }
+            set { PrintSettings.PrintToPdf = value; }
+        }
+        //Export to a Spearate folder
+        public bool ExportToSeparateFolder
+        {
+            get { return PrintSettings.ExportToSeparateFolder; }
+            set { PrintSettings.ExportToSeparateFolder = value; }
+        }
         public bool ExportToSingleFolder
         {
             get { return PrintSettings.ExportToSingleFolder; }
@@ -35,6 +45,26 @@ namespace ExcelToPaper.ViewModels
         {
             get { return PrintSettings.SingleFolderPath; }
             set { PrintSettings.SingleFolderPath = value; }
+        }
+        public bool MergeNothing
+        {
+            get { return PrintSettings.MergeNothing; }
+            set { PrintSettings.MergeNothing = value; }
+        }
+        public bool MergeToFileSeparately
+        {
+            get { return PrintSettings.MergeToFileSeparately; }
+            set { PrintSettings.MergeToFileSeparately = value; }
+        }
+        public bool MergeToSingleFile
+        {
+            get { return PrintSettings.MergeToSingleFile; }
+            set { PrintSettings.MergeToSingleFile = value; }
+        }
+        public bool MergeDeleteOriginFile
+        {
+            get { return PrintSettings.MergeDeleteOriginFile; }
+            set { PrintSettings.MergeDeleteOriginFile = value; }
         }
         public string ErrorMessage { get; set; }
         public ICommand OpenFolderCommand => new DelegateCommand((o) => {

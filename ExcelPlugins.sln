@@ -3,10 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelToPdf", "ExcelToPdf\ExcelToPdf.csproj", "{05467EE4-BDB2-48C7-8BC2-915AD9E66FF0}"
-EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ExcelToPdfInstaller", "ExcelToPdfInstaller\ExcelToPdfInstaller.vdproj", "{AE2AF29E-4F16-42AB-A1BF-F1E1648F7D15}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExcelToPaper", "ExcelToPaper\ExcelToPaper.csproj", "{D7B12F6E-55C3-457B-B72D-0E9464F12AC3}"
 EndProject
 Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "ExcelToPaperInstaller", "ExcelToPaperInstaller\ExcelToPaperInstaller.vdproj", "{B8A16C13-8E0A-4CCA-BAF2-9652428B0D4E}"
@@ -17,12 +13,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{05467EE4-BDB2-48C7-8BC2-915AD9E66FF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{05467EE4-BDB2-48C7-8BC2-915AD9E66FF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{05467EE4-BDB2-48C7-8BC2-915AD9E66FF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{05467EE4-BDB2-48C7-8BC2-915AD9E66FF0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AE2AF29E-4F16-42AB-A1BF-F1E1648F7D15}.Debug|Any CPU.ActiveCfg = Debug
-		{AE2AF29E-4F16-42AB-A1BF-F1E1648F7D15}.Release|Any CPU.ActiveCfg = Release
 		{D7B12F6E-55C3-457B-B72D-0E9464F12AC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D7B12F6E-55C3-457B-B72D-0E9464F12AC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7B12F6E-55C3-457B-B72D-0E9464F12AC3}.Release|Any CPU.ActiveCfg = Release|Any CPU

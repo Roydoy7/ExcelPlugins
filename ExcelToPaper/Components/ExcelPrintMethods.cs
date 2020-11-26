@@ -1,54 +1,63 @@
 ﻿using CommonTools;
 using ExcelToPaper.DataModels;
 using Microsoft.Office.Interop.Excel;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
-using System;
+using System.Threading.Tasks;
 
 namespace ExcelToPaper.Components
 {
-    class ExcelToPaperMethods
+    public class ExcelPrintMethods
     {
-        public static async Task PrintToPaper(
+        public static async Task<IEnumerable<PrintResult>> PrintToPaper(
             string printer, //Printer name
             CancellationToken cancelToken,//Cancel token
-            Dictionary<string, List<SheetInfo>> excelInfos, //Workbook and worksheet info.
+            IEnumerable<WorkbookInfo> workbookInfos,
             PrintSettings printSettings,
             Action<string> updateStatus = null//Invoke to update status
             )
         {
+            var printResults = new BlockingCollection<PrintResult>();
+
             //Valid check
             if (printSettings.ExportToSingleFolder)
                 if (printSettings.SingleFolderPath.IsNullOrEmpty())
-                    return;
-            else
+                    return printResults;
+                else
                 {
                     //Remove \\ at the end
                     if (printSettings.SingleFolderPath.EndsWith("\\"))
                         printSettings.SingleFolderPath = printSettings.SingleFolderPath.TrimEnd('\\');
                 }
 
+
             await Task.Run(async () =>
             {
                 //Start excel
                 var excel = new Application();
                 //Print out
-                foreach (var kvp in excelInfos)
+                foreach (var workbookInfo in workbookInfos)
                 {
-                    updateStatus?.Invoke($"処理中 {Path.GetFileName(kvp.Key)}...");
+                    //Ignore if all the sheets are unchecked
+                    if (!workbookInfo.WorksheetInfos.Any(x => x.IsSheetChecked)) 
+                        continue;
+
+                    updateStatus?.Invoke($"処理中 {workbookInfo.FileName}...");
+                    var result =
                     PrintToPaper(
-                        excel, 
+                        excel,
                         printer,
                         cancelToken,
-                        kvp.Key, 
-                        kvp.Value,
+                        workbookInfo.FileName,
+                        workbookInfo.WorksheetInfos,
                         printSettings
                         );
-                    if(cancelToken.IsCancellationRequested)
+                    printResults.Add(result);
+                    if (cancelToken.IsCancellationRequested)
                     {
                         updateStatus?.Invoke($"中止中...");
                         await Task.Delay(500);
@@ -58,25 +67,24 @@ namespace ExcelToPaper.Components
                 //Quit
                 excel.Quit();
             });
+
+            return printResults;
         }
 
-        private static void PrintToPaper(
-            Application excel, 
+        private static PrintResult PrintToPaper(
+            Application excel,
             string printer,
             CancellationToken cancelToken,//Cancel token
-            string filePath, 
-            List<SheetInfo> sheetInfos,
-            PrintSettings printSettings,
-            string singleFolderPath = "" //The single folder path to be exported.
+            string filePath,
+            IEnumerable<WorksheetInfo> sheetInfos,
+            PrintSettings printSettings
             )
         {
-            //Check if there is any worksheet to print
-            if (!sheetInfos.Any(x => x.IsSheetChecked))
-                return;
-
+            var result = new PrintResult();
             var exportFolderPath = "";
             var pdfNamePrefix = "";
 
+            //Print to separate folders
             if (!printSettings.ExportToSingleFolder)
             {
                 //Create a folder with the same name as the excel
@@ -85,16 +93,20 @@ namespace ExcelToPaper.Components
                 exportFolderPath = folderPath + "\\" + fileName;
                 Directory.CreateDirectory(exportFolderPath);
             }
+            //Print to a single folder
             else
             {
                 //User single folder path as the export path
                 exportFolderPath = printSettings.SingleFolderPath;
-                if(printSettings.AttachWorkbookNameBeforeWorksheet)
+                if (printSettings.AttachWorkbookNameBeforeWorksheet)
                 {
                     var excelName = Path.GetFileNameWithoutExtension(filePath);
                     pdfNamePrefix = excelName + "_";
                 }
             }
+
+            result.OutputFolderPath = exportFolderPath;
+            result.WorkbookPath = filePath;
 
             //Try to export worksheet as pdf
             try
@@ -112,13 +124,23 @@ namespace ExcelToPaper.Components
                         if (target.EndPage > 0)
                             toPage = target.EndPage;
                         //Print to pdf
-                        if(!printSettings.PrintToPaper)
+                        if (!printSettings.PrintToPaper)
+                        {
+                            var pdfFilePath = exportFolderPath + "\\" + pdfNamePrefix + ws.Name + ".pdf";
+                            //ws.PrintOutEx(
+                            //    From: fromPage,
+                            //    To: toPage,
+                            //    ActivePrinter: printer,
+                            //    PrToFileName: pdfFilePath
+                            //    );
                             ws.PrintOut(
-                                From:fromPage,
-                                To:toPage,
+                                From: fromPage,
+                                To: toPage,
                                 ActivePrinter: printer,
-                                PrToFileName: exportFolderPath + "\\" + pdfNamePrefix + ws.Name + ".pdf"
+                                PrToFileName: pdfFilePath
                                 );
+                            result.PrintedPdfPaths.Add(pdfFilePath);
+                        }
                         //Print to paper
                         else
                             ws.PrintOut(
@@ -130,15 +152,13 @@ namespace ExcelToPaper.Components
                     if (cancelToken.IsCancellationRequested)
                         break;
                 }
-                wb.Close(SaveChanges:false);
+                wb.Close(SaveChanges: false);
             }
             catch { }
+
+            return result;
         }
 
-        private static void Test()
-        {
-            PrintDocument pd = new PrintDocument();
-            PrinterSettings ps = new PrinterSettings();
-        }
+
     }
 }

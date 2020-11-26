@@ -11,8 +11,10 @@ namespace ExcelToPaper
 {
     public partial class ThisAddIn
     {
+        public static Excel.Application Excel { get; private set; }
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
+            Excel = this.Application;
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
@@ -28,7 +30,7 @@ namespace ExcelToPaper
         private void InternalStartup()
         {
             this.Startup += new System.EventHandler(ThisAddIn_Startup);
-            this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
+            this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);           
         }
         
         #endregion
