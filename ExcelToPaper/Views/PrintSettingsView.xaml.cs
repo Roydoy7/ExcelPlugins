@@ -18,9 +18,9 @@ namespace ExcelToPaper.Views
     /// <summary>
     /// ExcelToPaperExportSelectionView.xaml 的交互逻辑
     /// </summary>
-    public partial class ExcelToPaperExportSelectionView : UserControl
+    public partial class PrintSettingsView : Window
     {
-        public ExcelToPaperExportSelectionView()
+        public PrintSettingsView()
         {
             InitializeComponent();
         }

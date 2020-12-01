@@ -4,14 +4,9 @@ using CommonWPFTools;
 using ExcelToPaper.Components;
 using ExcelToPaper.DataModels;
 using ExcelToPaper.Views;
-using MaterialDesignThemes.Wpf;
 using Microsoft.Office.Interop.Excel;
-using PropertyChanged;
-using SpreadsheetLight;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing.Printing;
 using System.IO;
@@ -19,74 +14,30 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Win = System.Windows;
 
 namespace ExcelToPaper.ViewModels
 {
     internal class ExcelToPaperDetailFormViewModel : ViewModelBase<ExcelToPaperDetailForm>
     {
+        private bool mSelectAllSheet;
+
         public ExcelToPaperDetailFormViewModel()
         {
             //Set default printer
             var printSettings = new PrinterSettings();
             SelectedPrinter = printSettings.PrinterName;
+
+            //
+            PageSizeCountExtractor = new WorkbookPageSizeCountExtractor(CancelTokenSourceOther.Token);
+            PageSizeCountExtractor.UpdateStatus = UpdateProgressMessage;
+            //
+            PagePreviewExtractor = new WorkbookPreviewExtractor(CancelTokenSourceOther.Token);
+            PagePreviewExtractor.UpdateStatus = UpdateProgressMessage;
+
         }
+        public static Application ExcelPrint { get; private set; }
 
-        ~ExcelToPaperDetailFormViewModel()
-        {
-            if (Excel != null)
-            {
-                Excel.Workbooks.Close();
-                Excel.Quit();
-                Excel = null;
-            }
-        }
-
-        public static Application Excel { get; private set; }
-        public bool ExcelIsBusy { get; set; } = false;
-        private bool mSelectAllSheet;
-        private CancellationTokenSource mCancelTokenSource = null;
-        private PrintSettings mPrintSettings = new PrintSettings();
-
-        //Export to a single folder
-        public bool ExportToSingleFolder { get; set; } = false;
-
-        //Attach workbook name before work sheet name
-        public bool AttachWorkbookNameBeforeWorksheet { get; set; } = false;
-
-        //Cancel button visibility
-        public bool IsCanelButtonVisiable { get; set; } = false;
-
-        public bool ShowPreviewProgressBar { get; set; }
-        public bool ShowProgressBar { get; set; }
-        public uint StartPage { get; set; }
-        public uint EndPage { get; set; }
-        public string Keyword { get; set; } = "";
-        public string SelectedPrinter { get; set; }
-        public string ProgressMessage { get; set; }
-
-        //The single folder path that is used to be exported.
-        public string SingleFolderPath { get; set; }
-
-        public WorkbookInfo SelectedWorkbookInfo { get; set; }
-        public WorksheetInfo SelectedWorksheetInfo { get; set; }
-        public ObservableCollection<WorkbookInfo> WorkbookInfos { get; set; } = new ObservableCollection<WorkbookInfo>();
-
-        public string SelectedSheetMessage
-        {
-            get
-            {
-                var cnt = 0;
-                foreach (var workbookInfo in WorkbookInfos)
-                    foreach (var worksheetInfo in workbookInfo.WorksheetInfos)
-                        if (worksheetInfo.IsSheetChecked)
-                            cnt++;
-
-                return $"選択されたシート数: {cnt}";
-            }
-        }
-
-        //Check to select all sheets.
-        [AlsoNotifyFor(nameof(SelectedSheetMessage))]
         public bool SelectAllSheet
         {
             get => mSelectAllSheet;
@@ -96,9 +47,38 @@ namespace ExcelToPaper.ViewModels
 
                 if (SelectedWorkbookInfo != null)
                     foreach (var worksheetInfo in SelectedWorkbookInfo.WorksheetInfos)
-                        worksheetInfo.IsSheetChecked = value;
+                        worksheetInfo.IsWorksheetChecked = value;
             }
         }
+        public bool ShowPreviewProgressBar { get; set; }
+        public bool ShowProgressBar { get; set; }
+        public string Keyword { get; set; } = "";
+        public string SelectedPrinter { get; set; }
+        public string ProgressMessage { get; set; }
+
+        public string SelectedSheetMessage
+        {
+            get
+            {
+                var cnt = 0;
+                foreach (var workbookInfo in WorkbookInfos)
+                    foreach (var worksheetInfo in workbookInfo.WorksheetInfos)
+                        if (worksheetInfo.IsWorksheetChecked)
+                            cnt++;
+
+                return $"選択されたシート数: {cnt}";
+            }
+        }
+
+        public CancellationTokenSource CancelTokenSourcePrint { get; private set; }
+        public CancellationTokenSource CancelTokenSourceOther { get; private set; } = new CancellationTokenSource();
+        public PrintSettings PrintSettings { get; private set; } = new PrintSettings();
+        public Task GetPageCountSizeTask { get; private set; }
+        public WorkbookPageSizeCountExtractor PageSizeCountExtractor { get; private set; }
+        public WorkbookPreviewExtractor PagePreviewExtractor { get; private set; }
+        public WorkbookInfo SelectedWorkbookInfo { get; set; }
+        public WorksheetInfo SelectedWorksheetInfo { get; set; }
+        public WorkbookCollection WorkbookInfos { get; set; } = new WorkbookCollection();
 
         public IEnumerable<string> InstalledPrinters
         {
@@ -111,46 +91,125 @@ namespace ExcelToPaper.ViewModels
             }
         }
 
-        public ICommand AddFromFolderCommand => new DelegateCommand(async (o) =>
+        public ICommand OnWindowClosing => new DelegateCommand((o) =>
         {
-            if (ExcelIsBusy)
-            {
-                UpdateProgressMessage("Excelは忙しいです。");
-                await Task.Delay(2000);
-                UpdateProgressMessage("");
+            CancelTokenSourceOther.Cancel();
+        });
+
+        public ICommand AddFromFolderCommand => new DelegateCommand((o) =>
+        {
+            var vm = new PathFormViewModel();
+            vm.View.ShowDialog();
+            if (vm.ExcelFolderPath.IsNullOrEmpty())
                 return;
+
+            //Create a new cancel token if old token has cancelled
+            if (CancelTokenSourceOther == null || CancelTokenSourceOther.IsCancellationRequested)
+            {
+                CancelTokenSourceOther = new CancellationTokenSource();
+                PageSizeCountExtractor.SetCancelToken(CancelTokenSourceOther.Token);
+                PagePreviewExtractor.SetCancelToken(CancelTokenSourceOther.Token);
             }
 
-            var folderPath = FileBrowser.BrowseFolder();
-            if (folderPath.IsNullOrEmpty())
-                return;
+            var folderPath = vm.ExcelFolderPath;
 
             //Show progress bar
             ShowProgressBar = true;
+
+            //Create a dictionary from old data
+            var existWorkbookinfos = new ConcurrentDictionary<string, WorkbookInfo>(WorkbookInfos.ToDictionary(x => x.FilePath, y => y));
 
             //Get worksheet names from excel workbooks parallelly.
             var filePaths = CommonMethods.GetExcelPath(folderPath);
             var workbookInfos = new BlockingCollection<WorkbookInfo>();
             Parallel.ForEach(filePaths, filePath =>
             {
+                //If already exist in the old data, ignore
+                if (existWorkbookinfos.ContainsKey(filePath))
+                    return;
                 var workbookInfo = new WorkbookInfo { FilePath = filePath };
                 foreach (var sheetName in CommonMethods.GetWorksheetNames(filePath))
-                    workbookInfo.WorksheetInfos.Add(new WorksheetInfo { SheetName = sheetName });
+                    workbookInfo.Add(
+                        new WorksheetInfo { WorkbookInfo = workbookInfo, SheetName = sheetName });
                 workbookInfos.Add(workbookInfo);
+            });
+
+            //If no new data, return
+            if (!workbookInfos.Any())
+            {
+                ShowProgressBar = false;
+                return;
+            }
+
+            //Copy to window view model.
+            foreach (var workbookInfo in workbookInfos)
+                WorkbookInfos.Add(workbookInfo);
+
+            ShowProgressBar = false;
+
+            //Read page count and size
+            PageSizeCountExtractor.GetPageCountSize(workbookInfos);
+        });
+
+        public ICommand AddFilePathCommand => new DelegateCommand((o) =>
+        {
+            var workbookInfos = new BlockingCollection<WorkbookInfo>();
+            var filePaths = new List<string>();
+            foreach (var filePath in FileBrowser.BrowseExcelFile(true))
+                filePaths.Add(filePath);
+            //If no files selected, return
+            if (!filePaths.Any())
+                return;
+
+            //Create a new cancel token if old token has cancelled
+            if (CancelTokenSourceOther == null || CancelTokenSourceOther.IsCancellationRequested)
+            {
+                CancelTokenSourceOther = new CancellationTokenSource();
+                PageSizeCountExtractor.SetCancelToken(CancelTokenSourceOther.Token);
+                PagePreviewExtractor.SetCancelToken(CancelTokenSourceOther.Token);
+            }
+
+            //Show progress bar
+            ShowProgressBar = true;
+
+            Parallel.ForEach(filePaths, filePath =>
+            {
+                if (WorkbookInfos.Any(x => x.FilePath == filePath))
+                    return;
+                else
+                {
+                    var workbookInfo = new WorkbookInfo { FilePath = filePath };
+                    foreach (var sheetName in CommonMethods.GetWorksheetNames(filePath))
+                        workbookInfo.Add(
+                            new WorksheetInfo { WorkbookInfo = workbookInfo, SheetName = sheetName });
+
+                    workbookInfos.Add(workbookInfo);
+                }
             });
 
             //Copy to window view model.
             foreach (var workbookInfo in workbookInfos)
                 WorkbookInfos.Add(workbookInfo);
 
-            ShowProgressBar = false;                        
+            //Show progress bar
+            ShowProgressBar = false;
+
+            //Read page count and size
+            PageSizeCountExtractor.GetPageCountSize(workbookInfos);
         });
 
         //On select changed of the first listview, update the datasource of the second listview.
         public ICommand WorkbookInfoSelectionChanged => new DelegateCommand((o) =>
         {
             if (SelectedWorkbookInfo != null)
+            {
                 SelectedWorksheetInfo = SelectedWorkbookInfo.WorksheetInfos.ElementAt(0);
+                if (SelectedWorkbookInfo.Any(x => x.IsWorksheetChecked))
+                    mSelectAllSheet = true;
+                else
+                    mSelectAllSheet = false;
+                NotifyPropertyChanged(nameof(SelectAllSheet));
+            }
         });
 
         //Open export folder
@@ -171,23 +230,6 @@ namespace ExcelToPaper.ViewModels
             }
         });
 
-        public ICommand AddFilePathCommand => new DelegateCommand((o) =>
-        {
-            foreach (var filePath in FileBrowser.BrowseExcelFile(true))
-            {
-                if (WorkbookInfos.Any(x => x.FilePath == filePath))
-                    continue;
-                else
-                {
-                    var workbookInfo = new WorkbookInfo { FilePath = filePath };
-                    foreach (var sheetName in CommonMethods.GetWorksheetNames(filePath))
-                        workbookInfo.WorksheetInfos.Add(new WorksheetInfo { SheetName = sheetName });
-
-                    WorkbookInfos.Add(workbookInfo);
-                }
-            }
-        });
-
         public ICommand DeleteFilePathCommand => new DelegateCommand((o) =>
         {
             if (SelectedWorkbookInfo == null)
@@ -195,9 +237,10 @@ namespace ExcelToPaper.ViewModels
             WorkbookInfos.Remove(SelectedWorkbookInfo);
         });
 
-        public ICommand SingleSheetCheckedCommand => new DelegateCommand((o) =>
+        public ICommand ClearFilePathCommand => new DelegateCommand((o) =>
         {
-            NotifyPropertyChanged(nameof(SelectedSheetMessage));
+            CancelTokenSourceOther.Cancel();
+            WorkbookInfos.Clear();
         });
 
         public ICommand SelectByKeywordCommand => new DelegateCommand((o) =>
@@ -208,9 +251,18 @@ namespace ExcelToPaper.ViewModels
                 return;
             foreach (var worksheetInfo in SelectedWorkbookInfo.WorksheetInfos)
                 if (worksheetInfo.SheetName.ToUpper().Contains(Keyword.ToUpper()))
-                    worksheetInfo.IsSheetChecked = true;
+                    worksheetInfo.IsWorksheetChecked = true;
+        });
 
-            NotifyPropertyChanged(nameof(SelectedSheetMessage));
+        public ICommand SelectAllByKeywordCommand => new DelegateCommand((o) =>
+        {
+            if (Keyword.IsNullOrEmpty())
+                return;
+
+            foreach (var workbookInfo in WorkbookInfos)
+                foreach (var worksheetInfo in workbookInfo)
+                    if (worksheetInfo.SheetName.ToUpper().Contains(Keyword.ToUpper()))
+                        worksheetInfo.IsWorksheetChecked = true;
         });
 
         public ICommand UnSelectByKeywordCommand => new DelegateCommand((o) =>
@@ -221,244 +273,158 @@ namespace ExcelToPaper.ViewModels
                 return;
             foreach (var worksheetInfo in SelectedWorkbookInfo.WorksheetInfos)
                 if (worksheetInfo.SheetName.ToUpper().Contains(Keyword.ToUpper()))
-                    worksheetInfo.IsSheetChecked = false;
+                    worksheetInfo.IsWorksheetChecked = false;
+        });
 
-            NotifyPropertyChanged(nameof(SelectedSheetMessage));
+        public ICommand UnSelectAllByKeywordCommand => new DelegateCommand((o) =>
+        {
+            if (Keyword.IsNullOrEmpty())
+                return;
+
+            foreach (var workbookInfo in WorkbookInfos)
+                foreach (var worksheetInfo in workbookInfo)
+                    if (worksheetInfo.SheetName.ToUpper().Contains(Keyword.ToUpper()))
+                        worksheetInfo.IsWorksheetChecked = false;
         });
 
         public ICommand SelectAllCommand => new DelegateCommand((o) =>
         {
             foreach (var workbookInfo in WorkbookInfos)
                 foreach (var worksheetInfo in workbookInfo.WorksheetInfos)
-                    worksheetInfo.IsSheetChecked = true;
-
-            NotifyPropertyChanged(nameof(SelectedSheetMessage));
+                    worksheetInfo.IsWorksheetChecked = true;
         });
 
         public ICommand UnSelectAllCommand => new DelegateCommand((o) =>
         {
             foreach (var workbookInfo in WorkbookInfos)
                 foreach (var worksheetInfo in workbookInfo.WorksheetInfos)
-                    worksheetInfo.IsSheetChecked = false;
-
-            NotifyPropertyChanged(nameof(SelectedSheetMessage));
+                    worksheetInfo.IsWorksheetChecked = false;
         });
 
-        public ICommand ExportSettingCommand => new DelegateCommand(async (O) =>
+        public ICommand MoveWorksheetUp => new DelegateCommand((o) =>
         {
-            var vm = new ExcelToPaperExportSelectionViewModel();
-            //Init old value.
-            vm.ExportToSingleFolder = mPrintSettings.ExportToSingleFolder;
-            vm.ExportToSeparateFolder = mPrintSettings.ExportToSeparateFolder;
-
-            vm.SingleFolderPath = mPrintSettings.SingleFolderPath;
-            vm.AttachWorkbookNameBeforeWorksheet = mPrintSettings.AttachWorkbookNameBeforeWorksheet;
-
-            vm.PrintToPaper = mPrintSettings.PrintToPaper;
-            vm.PrintToPdf = mPrintSettings.PrintToPdf;
-
-            vm.MergeNothing = mPrintSettings.MergeNothing;
-            vm.MergeToFileSeparately = mPrintSettings.MergeToFileSeparately;
-            vm.MergeToSingleFile = mPrintSettings.MergeToSingleFile;
-            vm.MergeDeleteOriginFile = mPrintSettings.MergeDeleteOriginFile;
-            //Show dialog.
-            var result = await DialogHost.Show(vm.View, "Root");
-            var dialogResult = (bool)result;
-            if (!dialogResult) return;
-
-            mPrintSettings.ExportToSingleFolder = vm.ExportToSingleFolder;
-            mPrintSettings.ExportToSeparateFolder = vm.ExportToSeparateFolder;
-
-            mPrintSettings.AttachWorkbookNameBeforeWorksheet = vm.AttachWorkbookNameBeforeWorksheet;
-            mPrintSettings.SingleFolderPath = vm.SingleFolderPath;
-
-            mPrintSettings.PrintToPaper = vm.PrintToPaper;
-            mPrintSettings.PrintToPdf = vm.PrintToPdf;
-
-            mPrintSettings.MergeNothing = vm.MergeNothing;
-            mPrintSettings.MergeToFileSeparately = vm.MergeToFileSeparately;
-            mPrintSettings.MergeToSingleFile = vm.MergeToSingleFile;
-            mPrintSettings.MergeDeleteOriginFile = vm.MergeDeleteOriginFile;
-        });
-
-        
-        public ICommand GetPageCountSizeCommand => new DelegateCommand(async (o) =>
-        {
-            if (ExcelIsBusy)
-            {
-                UpdateProgressMessage("Excelは忙しいです。");
-                await Task.Delay(2000);
-                UpdateProgressMessage("");
+            if (SelectedWorkbookInfo == null)
                 return;
-            }
 
-            //Show dialog
-            var vm = new ExcelToPaperGetDetailSelectionViewModel();
-            var result = await DialogHost.Show(vm.View, "MiddleRight");
-            var dialogResult = (bool)result;
-            if (!dialogResult) return;
+            if (SelectedWorksheetInfo == null)
+                return;
 
-            //Show progress bar
-            ShowPreviewProgressBar = true;
-
-            ExcelIsBusy = true;
-            //Start a excel
-            await StartExcel();
-
-            if (Excel != null)
-            {
-                if (!vm.GetAllFileDetail)
-                {
-                    if (SelectedWorkbookInfo == null || SelectedWorkbookInfo.FilePath.IsNullOrEmpty())
-                        return;
-                    await CommonMethods.GetWorksheetPageCount(Excel, SelectedWorkbookInfo.FilePath, SelectedWorkbookInfo.WorksheetInfos, UpdateProgressMessage);
-                }
-                else
-                    foreach (var workbookInfo in WorkbookInfos)
-                        await CommonMethods.GetWorksheetPageCount(Excel, workbookInfo.FilePath, workbookInfo.WorksheetInfos, UpdateProgressMessage);
-            }
-            ExcelIsBusy = false;
-            ShowPreviewProgressBar = false;
+            var cnt = SelectedWorkbookInfo.WorksheetInfos.Count;
+            var index = SelectedWorkbookInfo.WorksheetInfos.IndexOf(SelectedWorksheetInfo);
+            if (index == 0) return;
+            SelectedWorkbookInfo.WorksheetInfos.Move(index, index - 1);
         });
-        
+
+        public ICommand MoveWorksheetDown => new DelegateCommand((o) =>
+        {
+            if (SelectedWorkbookInfo == null)
+                return;
+
+            if (SelectedWorksheetInfo == null)
+                return;
+
+            var cnt = SelectedWorkbookInfo.WorksheetInfos.Count;
+            var index = SelectedWorkbookInfo.WorksheetInfos.IndexOf(SelectedWorksheetInfo);
+            if (index == cnt - 1) return;
+            SelectedWorkbookInfo.WorksheetInfos.Move(index, index + 1);
+        });
+
+        public ICommand ExportSettingCommand => new DelegateCommand((O) =>
+        {
+            var vm = new PrintSettingsViewModel(PrintSettings);
+            vm.View.ShowDialog();
+            PrintSettings.Copy(vm.PrintSettings);
+            PrintSettings.NofityAllPropertyChanged();
+        });
 
         public ICommand PreviewCommand => new DelegateCommand(async (o) =>
         {
-            if (ExcelIsBusy)
-            {
-                UpdateProgressMessage("Excelは忙しいです。");
-                await Task.Delay(2000);
-                UpdateProgressMessage("");
+            var curWorkbookInfo = SelectedWorkbookInfo;
+            if (curWorkbookInfo == null || curWorkbookInfo.FilePath.IsNullOrEmpty())
                 return;
+
+            //If in the progress of getting preview
+            if (ShowPreviewProgressBar)
+                return;
+
+            //If page count is very large, ask if continue.
+            if (curWorkbookInfo.WorksheetInfos.Select(x => x.Count).Sum() > 35)
+            {
+                if (Win.MessageBox.Show("ページの数が多いので、時間がかかります。続きますか？", "Question", Win.MessageBoxButton.YesNo, Win.MessageBoxImage.Question) != Win.MessageBoxResult.Yes)
+                    return;
             }
 
             //Show progress bar
             ShowPreviewProgressBar = true;
-
-            if (Excel == null)
-                return;
-
-            if (SelectedWorkbookInfo == null || SelectedWorkbookInfo.FilePath.IsNullOrEmpty())
-                return;
-
-
-            ExcelIsBusy = true;
+            curWorkbookInfo.ShowProgressBar = true;
             //Start a excel
-            await StartExcel();
-
-            await CommonMethods.GetWorkSheetPreview(Excel, SelectedWorkbookInfo.FilePath, SelectedWorkbookInfo.WorksheetInfos, UpdateProgressMessage);
-            foreach (var si in SelectedWorkbookInfo)
-                si.UpdatePreviews();
-            ExcelIsBusy = false;
-
+            await PagePreviewExtractor.GetPagePreview(curWorkbookInfo);
+            curWorkbookInfo.ShowProgressBar = false;
             ShowPreviewProgressBar = false;
         });
 
         public ICommand ExcelToPaperCancelCommand => new DelegateCommand((o) =>
         {
-            if (mCancelTokenSource == null)
+            if (CancelTokenSourcePrint == null)
                 return;
-            mCancelTokenSource.Cancel();
+            CancelTokenSourcePrint.Cancel();
         });
 
         public ICommand OkCommand => new DelegateCommand(async (o) =>
         {
             //Check the cancel token source.
-            if (mCancelTokenSource != null)
+            if (CancelTokenSourcePrint != null)
                 return;
+            //Show progress bar
+            ShowProgressBar = true;
 
             //Init cancel token.
-            mCancelTokenSource = new CancellationTokenSource();
-            //Make the cancel button visible.
-            IsCanelButtonVisiable = true;
-            NotifyPropertyChanged(nameof(IsCanelButtonVisiable));
+            CancelTokenSourcePrint = new CancellationTokenSource();
 
             //Wait until export finish.
             var printResults = await ExcelPrintMethods.PrintToPaper(
                 SelectedPrinter,
-                mCancelTokenSource.Token,
+                CancelTokenSourcePrint.Token,
                 WorkbookInfos,
-                mPrintSettings,
+                PrintSettings,
                 UpdateProgressMessage);
 
             //Wait 1.5s to let the last printed pdf to be released.
             await Task.Delay(1500);
 
             //Merge pdf
-            if (mPrintSettings.MergeToFileSeparately)
+            if (PrintSettings.MergeToFileSeparately)
             {
                 foreach (var printResult in printResults)
-                {
                     PdfMethods.MergePdf(printResult, UpdateProgressMessage);
-                }
             }
 
             //Delete merge pdf
-            if (mPrintSettings.MergeDeleteOriginFile)
+            if (PrintSettings.MergeToFileSeparately && PrintSettings.MergeDeleteOriginFile)
             {
                 foreach (var printResult in printResults)
-                {
                     PdfMethods.DeletePdf(printResult.PrintedPdfPaths);
-                }
             }
 
             //Set finish message
             ProgressMessage = "完成";
-            NotifyPropertyChanged(nameof(ProgressMessage));
 
             //Dispose cancel token source
-            mCancelTokenSource.Dispose();
-            mCancelTokenSource = null;
-
-            //Make the cancel button invisible.
-            IsCanelButtonVisiable = false;
-            NotifyPropertyChanged(nameof(IsCanelButtonVisiable));
+            CancelTokenSourcePrint.Dispose();
+            CancelTokenSourcePrint = null;
 
             //Wait 5s and clear finish message, hide progress bar
             await Task.Delay(5000);
             ProgressMessage = "";
-        });
 
-        public ICommand CancelCommand => new DelegateCommand((o) =>
-        {
-            //Can not close form when processing a task.
-            if (mCancelTokenSource != null)
-                return;
-            else
-                View.Close();
+            //Hide progressbar
+            ShowProgressBar = false;
         });
 
         private void UpdateProgressMessage(string message)
         {
             ProgressMessage = message;
-            NotifyPropertyChanged(nameof(ProgressMessage));
         }
 
-        private async Task GetPageCountAndSize(Application excel, IEnumerable<WorkbookInfo> workbookInfos, Action<string> updateStatus=null)
-        {
-            foreach (var workbookInfo in workbookInfos)
-            {
-                if (workbookInfo.IsWorksheetPageCountSizeObtained)
-                    continue;
-                await CommonMethods.GetWorksheetPageCount(excel, workbookInfo.FilePath, workbookInfo.WorksheetInfos, updateStatus);
-            }
-        }
-
-        private async void GetWorksheetPreview(Application excel, WorkbookInfo workbookInfo, Action<string> updateStatus = null)
-        {
-            if (workbookInfo.IsWorksheetPreviewObtained)
-                return;
-            await CommonMethods.GetWorkSheetPreview(excel, workbookInfo.FilePath, workbookInfo.WorksheetInfos, updateStatus);
-        }
-
-        private async Task StartExcel()
-        {
-            if (Excel == null)
-                await Task.Run(() =>
-                {
-                    Excel = new Application();
-                    Excel.AutomationSecurity = Microsoft.Office.Core.MsoAutomationSecurity.msoAutomationSecurityForceDisable;
-                });
-        }
     }
 }

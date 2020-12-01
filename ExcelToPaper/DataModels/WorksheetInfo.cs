@@ -4,18 +4,22 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
+using PropertyChanged;
 
 namespace ExcelToPaper.DataModels
 {
     public class WorksheetInfo : INotifyPropertyChanged
     {
+        public System.Action WorksheetChecked { get; set; }
         public string SheetName { get; set; }
-        public bool IsSheetChecked { get; set; } = false;
+        [OnChangedMethod(nameof(OnWorksheetChecked))]
+        public bool IsWorksheetChecked { get; set; } = false;
         public int Count { get; set; } = 0;
         public uint StartPage { get; set; } = 0;
         public uint EndPage { get; set; } = 0;
         public XlPaperSize PaperSize { get; set; }
         public XlPageOrientation Orientation { get; set; }
+        public WorkbookInfo WorkbookInfo { get; set; }
         public List<Bitmap> PreviewsRaw { get; private set; } = new List<Bitmap>();
         public ObservableCollection<PreviewInfo> Previews { get; private set; } = new ObservableCollection<PreviewInfo>();
 
@@ -34,5 +38,10 @@ namespace ExcelToPaper.DataModels
                     Index = index++,
                 });
         }
+        private void OnWorksheetChecked()
+        {
+            WorksheetChecked?.Invoke();
+        }
+
     }
 }

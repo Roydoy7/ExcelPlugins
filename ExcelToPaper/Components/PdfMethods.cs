@@ -23,7 +23,20 @@ namespace ExcelToPaper.Components
         public static void MergePdf(IEnumerable<string> filePaths, string mergedFilePath, Action<string> updateStatus = null)
         {
             if (!filePaths.Any()) return;
-            if (filePaths.Count() == 1) return;
+            if (filePaths.Count() == 1)
+            {
+                try
+                {
+                    //Delete if old file exist
+                    if (File.Exists(mergedFilePath))
+                        File.Delete(mergedFilePath);
+
+                    //Rename if only one file exist
+                    File.Move(filePaths.ElementAt(0), mergedFilePath);
+                }
+                catch { }
+                return;
+            }
 
             var pdfDocOut = new PdfDocument();
 
@@ -48,7 +61,11 @@ namespace ExcelToPaper.Components
         {
             if (!filePaths.Any()) return;
             foreach (var filePath in filePaths)
-                File.Delete(filePath);
+                try
+                {
+                    File.Delete(filePath);
+                }
+                catch { }
         }
     }
 }

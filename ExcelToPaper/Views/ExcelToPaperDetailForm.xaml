@@ -9,9 +9,16 @@
              xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
-             Title="ExcelToPaperDetailForm" Height="700" Width="1100" 
+             Title="ExcelToPaperDetailForm" Height="700" Width="1300" 
              WindowStartupLocation="CenterScreen"
+        
              >
+
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="Closing">
+            <b:InvokeCommandAction Command="{Binding OnWindowClosing}"/>
+        </b:EventTrigger>
+    </b:Interaction.Triggers>
 
     <Window.Resources>
         <ResourceDictionary>
@@ -34,41 +41,35 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="50"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="50"/>
+                <RowDefinition Height="30"/>
             </Grid.RowDefinitions>
 
             <!--Top-->
             <Grid Grid.Row="0" >
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width=".6*"/>
+                    <ColumnDefinition/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Text="プリンター"/>
-                    <ComboBox VerticalAlignment="Center" MinWidth="300" ItemsSource="{Binding InstalledPrinters}" SelectedItem="{Binding SelectedPrinter}"/>
+                    <ComboBox VerticalAlignment="Center" MinWidth="360" ItemsSource="{Binding InstalledPrinters}" SelectedItem="{Binding SelectedPrinter}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Style="{StaticResource MaterialDesignIconButton}"
-                            materialDesign:ButtonAssist.CornerRadius="0"
-                            materialDesign:ShadowAssist.ShadowDepth="Depth0"
+                    <Button Style="{StaticResource MaterialDesignFloatingActionButton}"
                             Margin="0 0 5 0" Width="40" Height="40" Padding="0" 
-                            Content="{materialDesign:PackIcon Kind=Play}"
+                            Content="{materialDesign:PackIcon Kind=Printer,Size=30}"
                             VerticalAlignment="Center" Command="{Binding OkCommand}" 
                             Foreground="White" Background="{DynamicResource PrimaryHueMidBrush}"
                             IsDefault="True">
                     </Button>
-                    <Button Style="{StaticResource MaterialDesignIconButton}"
-                            materialDesign:ButtonAssist.CornerRadius="0"
-                            materialDesign:ShadowAssist.ShadowDepth="Depth0"
+                    <Button Style="{StaticResource MaterialDesignFloatingActionButton}"
                             Margin="0 0 5 0" Width="30" Height="30" Padding="0"
                             Command="{Binding ExcelToPaperCancelCommand}"
                             Foreground="White" Background="{DynamicResource PrimaryHueMidBrush}"
                             Content="{materialDesign:PackIcon Kind=Stop}"/>
-                    <Button Style="{StaticResource MaterialDesignIconButton}"
-                            materialDesign:ButtonAssist.CornerRadius="0"
-                            materialDesign:ShadowAssist.ShadowDepth="Depth0"
+                    <Button Style="{StaticResource MaterialDesignFloatingActionButton}"
                             Margin="0 0 5 0" Width="30" Height="30" Padding="0" 
                             VerticalAlignment="Center" 
                             Content="{materialDesign:PackIcon Kind=Settings}" Command="{Binding ExportSettingCommand}" 
@@ -87,52 +88,38 @@
             <!--Middle-->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width=".6*"/>
+                    <ColumnDefinition Width=".5*"/>
+                    <ColumnDefinition Width="3"/>
                     <ColumnDefinition/>
-                    <ColumnDefinition Width=".45*"/>
+                    <ColumnDefinition Width="3"/>
+                    <ColumnDefinition Width="300"/>
                 </Grid.ColumnDefinitions>
 
-                <!--Middle left-->
+                <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="Gainsboro"/>
+                <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" Background="Gainsboro"/>
+
+                <!--Middle left-->                
                 <Grid Grid.Column="0">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="65"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0 5 0 5">
-                        <TextBlock Margin="10 0 5 0" VerticalAlignment="Center" Text="ファイル"/>
-                        <Button Margin="5 0 0 0" Padding="0" Width="55"
-                                Command="{Binding AddFromFolderCommand}"
-                                Foreground="White">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="FolderPlus"/>
-                                <TextBlock Margin="5 0 0 0" VerticalAlignment="Center" Text="開く"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="5 0 0 0" Padding="0" Width="55" 
-                                Command="{Binding AddFilePathCommand}" 
-                                Foreground="White"
-                                ToolTip="追加">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="FilePlus"/>
-                                <TextBlock Margin="5 0 0 0" VerticalAlignment="Center" Text="追加"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Margin="5 0 0 0" Padding="0" Width="55" 
-                                Command="{Binding DeleteFilePathCommand}" 
-                                Foreground="White"
-                                ToolTip="削除">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="FileRemove"/>
-                                <TextBlock Margin="5 0 0 0" VerticalAlignment="Center" Text="削除"/>
-                            </StackPanel>
-                        </Button>
-                    </StackPanel>
+                    <ToolBarTray Margin="0 5 0 0" VerticalAlignment="Bottom" ClipToBounds="False">
+                        <ToolBar Style="{StaticResource MaterialDesignToolBar}" >
+                            <!--<TextBlock Margin="5 0 0 0" VerticalAlignment="Center" Text="ファイル"/>-->
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=FolderPlus}" Command="{Binding AddFromFolderCommand}" ToolTip="フォルダを開く"/>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=FilePlus}" Command="{Binding AddFilePathCommand}" ToolTip="ファイル追加"/>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=FileRemove}" Command="{Binding DeleteFilePathCommand}" ToolTip="ファイル削除"/>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=DeleteVariant}" Command="{Binding ClearFilePathCommand}" ToolTip="全てクリア"/>
+                            <Separator/>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=Eye}" Command="{Binding PreviewCommand}" ToolTip="プレビュー"/>
+                        </ToolBar>
+                    </ToolBarTray>
 
                     <ListView Grid.Row="1"
                         ItemsSource="{Binding WorkbookInfos}"
-                        SelectedItem="{Binding SelectedWorkbookInfo}"
-                        >
+                        SelectedItem="{Binding SelectedWorkbookInfo}">
 
                         <b:Interaction.Triggers>
                             <b:EventTrigger EventName="SelectionChanged">
@@ -142,47 +129,70 @@
 
                         <ListView.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="エクスポートフォルダを開く" Command="{Binding OpenExportFolderCommand}" Icon="{materialDesign:PackIcon Kind=FolderOpen}" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
-                                <MenuItem Header="追加" Command="{Binding AddFilePathCommand}" Icon="{materialDesign:PackIcon Kind=FilePlus}" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
-                                <MenuItem Header="削除" Command="{Binding DeleteFilePathCommand}" Icon="{materialDesign:PackIcon Kind=FileRemove}" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                                <MenuItem Header="プレビュー" Command="{Binding PreviewCommand}" Icon="{materialDesign:PackIcon Kind=Eye}" />
+                                <MenuItem Header="エクスポートフォルダを開く" Command="{Binding OpenExportFolderCommand}" Icon="{materialDesign:PackIcon Kind=FolderOpen}" />
+                                <MenuItem Header="追加" Command="{Binding AddFilePathCommand}" Icon="{materialDesign:PackIcon Kind=FilePlus}" />
+                                <MenuItem Header="削除" Command="{Binding DeleteFilePathCommand}" Icon="{materialDesign:PackIcon Kind=FileRemove}" />
                             </ContextMenu>
                         </ListView.ContextMenu>
 
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding FileName}" VerticalAlignment="Center"/>
+                                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                                 IsIndeterminate="True"
+                                                 Visibility="{Binding ShowProgressBar, Converter={StaticResource VisibilityDataConverterHiddenVisible}}"/>
+                                    <materialDesign:PackIcon Kind="Eye" VerticalAlignment="Center" 
+                                                             Foreground="{DynamicResource PrimaryHueMidBrush}"
+                                                             Visibility="{Binding IsWorksheetPreviewObtained, Converter={StaticResource VisibilityDataConverterHiddenVisible}}"/>
+                                    <CheckBox IsChecked="{Binding IsAllWorksheetChecked}" IsThreeState="{Binding IsThreeState}"/>
+                                    <TextBlock Margin="2 0 0 0" Text="{Binding FileName}" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </DataTemplate>
                         </ListView.ItemTemplate>
 
-                    </ListView>
+                    </ListView>                    
                 </Grid>
                 
                 <!--Middle center-->
-                <Grid Grid.Column="1">
+                <Grid Grid.Column="2">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="70"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
 
                     <!--Middle top-->
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0 5 0 5">
-                        <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="キーワードで選択"/>
-                        <TextBox Margin="10 0 0 0" Width="120" VerticalAlignment="Center" Text="{Binding Keyword}"/>
-                        <Button Margin="15 0 0 0" Padding="0" Width="50" VerticalAlignment="Center" Content="選択" Command="{Binding SelectByKeywordCommand}" Foreground="White" ToolTip="キーワードを含むシートを選択する."/>
-                        <Button Margin="10 0 0 0" Padding="0" Width="50" VerticalAlignment="Center" Content="排除" Command="{Binding UnSelectByKeywordCommand}" Foreground="White" ToolTip="キーワードを含むシートを排除する."/>
-                        <Rectangle Margin="10 5 10 5" VerticalAlignment="Stretch" Width="3" StrokeThickness="2" Stroke="Gray"/>
-                        <Button Margin="0 0 0 0" Padding="0" Width="50" VerticalAlignment="Center" Content="全選" Command="{Binding SelectAllCommand}" Foreground="White" ToolTip="全てのシートを選択する."/>
-                        <Button Margin="10 0 0 0" Padding="0" Width="50" VerticalAlignment="Center" Content="クリア" Command="{Binding UnSelectAllCommand}" Foreground="White" ToolTip="全てのシートをクリアする."/>
-                    </StackPanel>
+                    <ToolBarTray Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0 0 0 5">
+                        <ToolBar Style="{DynamicResource MaterialDesignToolBar}"  ClipToBounds="False">
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=CheckAll}" Command="{Binding SelectAllCommand}" ToolTip="全てのシートを選択する."/>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=AlphaCBox}" Command="{Binding UnSelectAllCommand}" ToolTip="全てのシートをクリアする."/>
+                            <Separator />
+                            <TextBlock Margin="5 0 0 0" VerticalAlignment="Center" Text="キーワード"/>
+                            <TextBox Margin="5 0 0 0" Width="120" VerticalAlignment="Center" Text="{Binding Keyword}"/>
+                            <materialDesign:Badged Badge="{Binding WorkbookInfos.SelectedWorksheetCount}" ToolBar.OverflowMode="AsNeeded" BadgeBackground="Gainsboro">
+                                <Button Margin="0 0 0 0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Content="{materialDesign:PackIcon Kind=CheckboxMultipleMarked}" Command="{Binding SelectAllByKeywordCommand}" ToolTip="全範囲でキーワードを含むシートを選択する."/>
+                            </materialDesign:Badged>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=CheckboxMarked}" Command="{Binding SelectByKeywordCommand}" ToolTip="キーワードを含むシートを選択する."/>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=CloseBoxMultiple}" Command="{Binding UnSelectAllByKeywordCommand}" ToolTip="全範囲でキーワードを含むシートを排除する."/>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=CloseBox}" Command="{Binding UnSelectByKeywordCommand}" ToolTip="キーワードを含むシートを排除する."/>
+                            <Separator />
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=ArrowUp}" Command="{Binding MoveWorksheetUp}" ToolTip="上に移動"/>
+                            <Button Margin="0 0 0 0" Content="{materialDesign:PackIcon Kind=ArrowDown}" Command="{Binding MoveWorksheetDown}" ToolTip="下に移動"/>
+                        </ToolBar>
+                    </ToolBarTray>
 
-                    <!--Middle bottom-->
+                    <!--Middle center-->
                     <materialDesign:DialogHost Grid.Row="1" Identifier="MiddleRight">
                         <ListView                         
                             ItemsSource="{Binding SelectedWorkbookInfo.WorksheetInfos}"
                             SelectedItem="{Binding SelectedWorksheetInfo}">
 
+                            <ListView.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="上に移動" Icon="{materialDesign:PackIcon Kind=ArrowUp}" Command="{Binding MoveWorksheetUp}"/>
+                                    <MenuItem Header="下に移動" Icon="{materialDesign:PackIcon Kind=ArrowDown}" Command="{Binding MoveWorksheetDown}"/>
+                                </ContextMenu>
+                            </ListView.ContextMenu>
                             <ListView.View>
                                 <GridView>
 
@@ -192,43 +202,40 @@
                                         </GridViewColumn.Header>
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <CheckBox IsChecked="{Binding IsSheetChecked}" Command="{Binding DataContext.SingleSheetCheckedCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"/>
-                                                </StackPanel>
+                                                <CheckBox Margin="5 5 0 0" IsChecked="{Binding IsWorksheetChecked}"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
 
-                                    <GridViewColumn Header="シート名" DisplayMemberBinding="{Binding SheetName}"/>
-                                    <GridViewColumn>
-                                        <GridViewColumn.Header>
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button Style="{StaticResource MaterialDesignRaisedButton}"
-                                                    Margin="0 0 0 0" Padding="0" Width="160" Content="ページ数 ページサイズ" 
-                                                    Command="{Binding GetPageCountSizeCommand}" 
-                                                    Foreground="White"                                                         
-                                                    materialDesign:ButtonProgressAssist.Value="-1"
-                                                    materialDesign:ButtonProgressAssist.IsIndicatorVisible="True"
-                                                    materialDesign:ButtonProgressAssist.IsIndeterminate="{Binding ShowPreviewProgressBar}"
-                                                    ToolTip="ページ数とページサイズ情報を獲得する."/>                                                                                                
-                                            </StackPanel>
-                                        </GridViewColumn.Header>
+                                    <GridViewColumn Header="シート名">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Count}"/>
-                                                    <TextBlock Text="{Binding PaperSize,Converter={StaticResource PaperSizeDataConverter}}"/>
-                                                </StackPanel>
+                                                <TextBlock Margin="20 5 0 0" Text="{Binding SheetName}"/>
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
 
-                                    <GridViewColumn Width="200">
-                                        
+                                    <GridViewColumn Header="ページ数">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Margin="20 5 0 0" Text="{Binding Count}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+                                    <GridViewColumn Header="サイズ">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Margin="5 5 0 0" Text="{Binding PaperSize,Converter={StaticResource PaperSizeDataConverter}}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+                                    <GridViewColumn Width="200" Header="プリント範囲">                                        
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock VerticalAlignment="Center" Text="プリント範囲: 始"/>
+                                                    <TextBlock VerticalAlignment="Center" Text="始"/>
                                                     <TextBox Margin="5 0 5 0" Width="30" TextAlignment="Center" Text="{Binding StartPage, ValidatesOnDataErrors=True}"/>
                                                     <TextBlock Margin="5 0 0 0" VerticalAlignment="Center" Text="迄"/>
                                                     <TextBox Margin="5 0 5 0" Width="30" TextAlignment="Center" Text="{Binding EndPage, ValidatesOnDataErrors=True}"/>
@@ -240,30 +247,18 @@
                                 </GridView>
                             </ListView.View>
                         </ListView>
+                        
                     </materialDesign:DialogHost>
-
                 </Grid>
                 
                 <!--Middle right-->
-                <Grid Grid.Column="2">
+                <Grid Grid.Column="4">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
                         <RowDefinition/>
+                        <RowDefinition Height="auto"/>
                     </Grid.RowDefinitions>
-
-                    <Button Grid.Row="0" Margin="5 5 5 5" Padding="0" Command="{Binding PreviewCommand}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="プレビュー" Foreground="White"/>
-                            <ProgressBar Margin="5 0 0 0"                    
-                                Style="{StaticResource MaterialDesignCircularProgressBar}"
-                                Value="0"
-                                Foreground="White"
-                                Visibility="{Binding ShowPreviewProgressBar, Converter={StaticResource VisibilityDataConverterHiddenVisible}}"
-                                IsIndeterminate="True" />
-                        </StackPanel>
-                    </Button>
-
-                    <ListView Grid.Row="1"
+                   
+                    <ListView Grid.Row="0"
                               ItemsSource="{Binding SelectedWorksheetInfo.Previews}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
@@ -276,31 +271,50 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
+                    
+                    <!--Preview progress bar-->
+                    <ProgressBar Grid.Row="1" Height="2" IsIndeterminate="{Binding ShowPreviewProgressBar}"/>
+
                 </Grid>
             </Grid>
-            
 
-            <!--Bottom section-->
+            <!--Bottom left-->
             <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width=".6*"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width=".45*"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
-                <!--Bottom left-->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" >
-                    <ProgressBar Margin="10 0 0 0"                    
-                      Style="{StaticResource MaterialDesignCircularProgressBar}"
-                      Value="0"
-                      IsIndeterminate="True" 
-                      Visibility="{Binding ShowProgressBar,Converter={StaticResource VisibilityDataConverterHiddenVisible}}"/>
+                <Rectangle Grid.ColumnSpan="2" Stroke="Gainsboro" StrokeThickness="1"/>
+
+                <!--Bottom left part-->
+                <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <ProgressBar Margin="10 0 0 0"                 
+                          Style="{StaticResource MaterialDesignCircularProgressBar}"
+                          Value="0"
+                          IsIndeterminate="True" 
+                          Visibility="{Binding ShowProgressBar,Converter={StaticResource VisibilityDataConverterHiddenVisible}}"/>
                     <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="{Binding ProgressMessage}"/>
                 </StackPanel>
 
-                <!--Bottom middle-->
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Text="{Binding SelectedSheetMessage}"/>
+                <!--Bottom right part-->
+                <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" DataContext="{Binding PrintSettings}">
+                    <materialDesign:PackIcon Margin="2 0 2 0" Kind="FilePdf" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" ToolTip="Pdfファイル"
+                                             Visibility="{Binding PrintToPdf,Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <materialDesign:PackIcon Margin="2 0 2 0" Kind="Printer" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" ToolTip="紙印刷"
+                                             Visibility="{Binding PrintToPaper,Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <materialDesign:PackIcon Margin="2 0 2 0" Kind="FileDocumentMultiple" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" ToolTip="マージしない"
+                                             Visibility="{Binding MergeNothing,Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <materialDesign:PackIcon Margin="2 0 2 0" Kind="FileDocument" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" ToolTip="マージ"
+                                             Visibility="{Binding MergeToFileSeparately,Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <materialDesign:PackIcon Margin="2 0 2 0" Kind="FolderMultiple" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" ToolTip="個別フォルダ"
+                                             Visibility="{Binding ExportToSeparateFolder,Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <materialDesign:PackIcon Margin="2 0 2 0" Kind="Folder" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}" ToolTip="一つフォルダ"
+                                             Visibility="{Binding ExportToSingleFolder,Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>
 
             </Grid>

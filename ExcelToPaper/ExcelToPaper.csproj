@@ -103,8 +103,9 @@
     This section specifies references for the project.
   -->
   <ItemGroup>
-    <Reference Include="CommonTools">
-      <HintPath>..\..\Libraries\CommonTools\bin\Debug\CommonTools.dll</HintPath>
+    <Reference Include="CommonTools, Version=1.0.2020.903, Culture=neutral, PublicKeyToken=d2df1db81211bf34, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Libraries\CommonTools\bin\Debug\net46\CommonTools.dll</HintPath>
     </Reference>
     <Reference Include="CommonWPFTools">
       <HintPath>..\..\Libraries\CommonWPFTools\bin\Debug\CommonWPFTools.dll</HintPath>
@@ -113,8 +114,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\docnet-master\src\Docnet.Core\bin\Debug\net46\Docnet.Core.dll</HintPath>
     </Reference>
-    <Reference Include="OpenXmlExcel">
-      <HintPath>..\..\Libraries\OpenXmlExcel\bin\Debug\OpenXmlExcel.dll</HintPath>
+    <Reference Include="OpenXmlExcel, Version=1.0.2020.905, Culture=neutral, PublicKeyToken=628a437b6f45c20a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Libraries\OpenXmlExcel\bin\Debug\net46\OpenXmlExcel.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -181,11 +183,14 @@
     <Compile Include="Components\LinqEx.cs" />
     <Compile Include="Components\PdfMethods.cs" />
     <Compile Include="Components\PdfToBitmapMethods.cs" />
+    <Compile Include="Components\WorkbookPageSizeCountExtractor.cs" />
+    <Compile Include="Components\WorkbookPreviewExtractor.cs" />
     <Compile Include="DataConverters\BooleanNotGateDataConverter.cs" />
     <Compile Include="DataConverters\PathToFileNameDataConverter.cs" />
     <Compile Include="DataConverters\XlPaperSizeDataConverter.cs" />
     <Compile Include="DataModels\PreviewInfo.cs" />
     <Compile Include="DataModels\PrintResult.cs" />
+    <Compile Include="DataModels\WorkbookCollection.cs" />
     <Compile Include="DataModels\WorkbookInfo.cs" />
     <Compile Include="DataModels\PrintSettings.cs" />
     <Compile Include="DataModels\WorksheetInfo.cs" />
@@ -193,18 +198,19 @@
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ValidationRules\StringNullEmptyValidationRule.cs" />
     <Compile Include="ViewModels\ExcelToPaperDetailFormViewModel.cs" />
-    <Compile Include="ViewModels\ExcelToPaperExportSelectionViewModel.cs" />
-    <Compile Include="ViewModels\ExcelToPaperFormViewModel.cs" />
+    <Compile Include="ViewModels\PrintSettingsViewModel.cs" />
+    <Compile Include="ViewModels\PathFormViewModel.cs" />
     <Compile Include="ViewModels\ExcelToPaperGetDetailSelectionViewModel.cs" />
     <Compile Include="Views\ExcelToPaperDetailForm.xaml.cs">
       <DependentUpon>ExcelToPaperDetailForm.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ExcelToPaperExportSelectionView.xaml.cs">
-      <DependentUpon>ExcelToPaperExportSelectionView.xaml</DependentUpon>
+    <Compile Include="Views\PrintSettingsView.xaml.cs">
+      <DependentUpon>PrintSettingsView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ExcelToPaperForm.xaml.cs">
-      <DependentUpon>ExcelToPaperForm.xaml</DependentUpon>
+    <Compile Include="Views\PathForm.xaml.cs">
+      <DependentUpon>PathForm.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ExcelToPaperGetDetailSelectionView.xaml.cs">
       <DependentUpon>ExcelToPaperGetDetailSelectionView.xaml</DependentUpon>
@@ -260,11 +266,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\ExcelToPaperExportSelectionView.xaml">
+    <Page Include="Views\PrintSettingsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\ExcelToPaperForm.xaml">
+    <Page Include="Views\PathForm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -296,6 +302,7 @@
       <Version>3.5.0</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

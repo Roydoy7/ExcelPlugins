@@ -6,7 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using CommonTools;
 
 namespace ExcelToPaper.Components
 {
@@ -22,7 +24,7 @@ namespace ExcelToPaper.Components
                     var wb = excel.OpenWorkbook(filePath, false);
                     foreach (var ws in wb.GetWorksheets())
                     {
-                        sheetNames.Add(ws.GetName(excel));
+                        sheetNames.Add(ws.GetName());
                     }
                     wb.CloseWorkbook();
                 }
@@ -42,7 +44,7 @@ namespace ExcelToPaper.Components
                     yield return filePath;
         }
 
-        internal static async Task GetWorksheetPageCount(Application excel, string filePath, IEnumerable<WorksheetInfo> sheetInfos, Action<string> updateStatus = null)
+        internal static async Task GetWorksheetPageCount(Application excel, string filePath, IEnumerable<WorksheetInfo> sheetInfos, CancellationToken cancellationToken, Action<string> updateStatus = null)
         {
             if (excel == null)
                 return;
@@ -52,19 +54,32 @@ namespace ExcelToPaper.Components
                 try
                 {
                     var wb = excel.Workbooks.Open(Filename: filePath, ReadOnly: true);
-                    foreach (Worksheet ws in wb.Worksheets)
+                    try
                     {
-                        if (sheetInfos.Any(x => x.SheetName == ws.Name))
+                        foreach (Worksheet ws in wb.Worksheets)
                         {
-                            var target = sheetInfos.First(x => x.SheetName == ws.Name);
-                            target.Count = ws.PageSetup.Pages.Count;
-                            target.PaperSize = ws.PageSetup.PaperSize;
-                            target.Orientation = ws.PageSetup.Orientation;
-                            target.NotifyPropertyChanged(nameof(target.Count));
-                            target.NotifyPropertyChanged(nameof(target.PaperSize));
+                            if (sheetInfos.Any(x => x.SheetName == ws.Name))
+                            {
+                                var target = sheetInfos.First(x => x.SheetName == ws.Name);
+                                target.Count = ws.PageSetup.Pages.Count;
+                                target.PaperSize = ws.PageSetup.PaperSize;
+                                target.Orientation = ws.PageSetup.Orientation;
+                                target.NotifyPropertyChanged(nameof(target.Count));
+                                target.NotifyPropertyChanged(nameof(target.PaperSize));
+                            }
+                            cancellationToken.ThrowIfCancellationRequested();
                         }
+
+                        wb.Close(SaveChanges: false);
                     }
-                    wb.Close(SaveChanges: false);
+                    catch(OperationCanceledException e)
+                    {
+                        wb.Close(SaveChanges: false);
+                        updateStatus?.Invoke(e.Message);
+                        //Wait for 5s and clear message.
+                        await Task.Delay(5000);
+                        updateStatus?.Invoke("");
+                    }
                 }
                 catch (Exception e)
                 {
@@ -76,7 +91,7 @@ namespace ExcelToPaper.Components
             });
         }
 
-        public static async Task GetWorkSheetPreview(Application excel, string filePath, IEnumerable<WorksheetInfo> sheetInfos, Action<string> updateStatus = null)
+        public static async Task GetWorkSheetPreview(Application excel, string filePath, IEnumerable<WorksheetInfo> sheetInfos, CancellationToken cancellationToken, Action<string> updateStatus = null)
         {
             if (excel == null)
                 return;
@@ -86,27 +101,36 @@ namespace ExcelToPaper.Components
                 try
                 {
                     var wb = excel.Workbooks.Open(Filename: filePath, ReadOnly: true);
-                    foreach (Worksheet ws in wb.Worksheets)
+                    try
                     {
-                        if (sheetInfos.Any(x => x.SheetName == ws.Name))
+                        foreach (Worksheet ws in wb.Worksheets)
                         {
-                            //Export as pdf
-                            var pdfFilePath = CreatePdfPath();
-                            ws.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, pdfFilePath);
+                            if (sheetInfos.Any(x => x.SheetName == ws.Name))
+                            {
+                                //Export as pdf
+                                var pdfFilePath = CreatePdfPath();
+                                ws.ExportAsFixedFormat(XlFixedFormatType.xlTypePDF, pdfFilePath);
 
-                            //Find target worksheet info
-                            var target = sheetInfos.First(x => x.SheetName == ws.Name);
-                            target.PreviewsRaw.Clear();
-                            //Add bitmap into preview raw data
-                            foreach (var bmp in PdfToBitmapMethods.ToBitmaps(pdfFilePath))
-                                target.PreviewsRaw.Add(bmp);
+                                //Find target worksheet info
+                                var target = sheetInfos.First(x => x.SheetName == ws.Name);
+                                target.PreviewsRaw.Clear();
+                                //Add bitmap into preview raw data
+                                foreach (var bmp in PdfToBitmapMethods.ToBitmaps(pdfFilePath))
+                                    target.PreviewsRaw.Add(bmp);
 
-                            //Delete temp pdf file
-                            if (File.Exists(pdfFilePath))
-                                File.Delete(pdfFilePath);
+                                //Delete temp pdf file
+                                if (File.Exists(pdfFilePath))
+                                    File.Delete(pdfFilePath);
+                            }
+                            cancellationToken.ThrowIfCancellationRequested();
                         }
+                        wb.Close(SaveChanges: false);
                     }
-                    wb.Close(SaveChanges: false);
+                    catch(OperationCanceledException e)
+                    {
+                        wb.Close(SaveChanges: false);
+                        updateStatus?.Invoke(e.Message);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -121,8 +145,15 @@ namespace ExcelToPaper.Components
 
         private static string CreatePdfPath()
         {
-            var filePath = AssemblyPath.GetAssemblyPath() + "\\" + FolderParameters.TmpFolderName;
+            //Directory name
+            var filePath = Path.Combine(PathEx.GetProgramDataPath(), FolderParameters.CompanryFolderName);
+            filePath = Path.Combine(filePath, FolderParameters.AppFloderName);
+            filePath = Path.Combine(filePath, FolderParameters.TmpFolderName);
+
+            //Create directory
             Directory.CreateDirectory(filePath);
+
+            //Create file name
             var rand = new Random();
             var fileName = DateTime.Now.ToString("yyyyMMddHHmmss" + rand.Next(1000, 9999));
             filePath = filePath + "\\" + fileName + ".pdf";

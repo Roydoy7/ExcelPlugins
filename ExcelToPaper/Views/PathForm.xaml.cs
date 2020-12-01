@@ -18,9 +18,9 @@ namespace ExcelToPaper.Views
     /// <summary>
     /// ExcelToPaperForm.xaml 的交互逻辑
     /// </summary>
-    public partial class ExcelToPaperForm
+    public partial class PathForm
     {
-        public ExcelToPaperForm()
+        public PathForm()
         {
             InitializeComponent();
         }

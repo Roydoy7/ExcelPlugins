@@ -27,7 +27,7 @@ namespace ExcelToPaper.Commands
 
         public static string ShowExcelToPaperForm()
         {
-            var vm = new ExcelToPaperFormViewModel();
+            var vm = new PathFormViewModel();
             vm.View.ShowDialog();
             if (vm.View.DialogResult.Value)
                 return vm.ExcelFolderPath;

@@ -34,7 +34,6 @@ namespace ExcelToPaper.Components
                         printSettings.SingleFolderPath = printSettings.SingleFolderPath.TrimEnd('\\');
                 }
 
-
             await Task.Run(async () =>
             {
                 //Start excel
@@ -43,7 +42,7 @@ namespace ExcelToPaper.Components
                 foreach (var workbookInfo in workbookInfos)
                 {
                     //Ignore if all the sheets are unchecked
-                    if (!workbookInfo.WorksheetInfos.Any(x => x.IsSheetChecked)) 
+                    if (!workbookInfo.WorksheetInfos.Any(x => x.IsWorksheetChecked))
                         continue;
 
                     updateStatus?.Invoke($"処理中 {workbookInfo.FileName}...");
@@ -52,7 +51,7 @@ namespace ExcelToPaper.Components
                         excel,
                         printer,
                         cancelToken,
-                        workbookInfo.FileName,
+                        workbookInfo.FilePath,
                         workbookInfo.WorksheetInfos,
                         printSettings
                         );
@@ -111,54 +110,95 @@ namespace ExcelToPaper.Components
             //Try to export worksheet as pdf
             try
             {
+                //Open workbook
                 var wb = excel.Workbooks.Open(Filename: filePath, ReadOnly: true);
+                //A dictionary to save worksheet data from workbook
+                var worksheetDict = new Dictionary<string, Worksheet>();
                 foreach (Worksheet ws in wb.Worksheets)
+                    worksheetDict.Add(ws.Name, ws);
+
+                foreach(var worksheetInfo in sheetInfos.Where(x=>x.IsWorksheetChecked))
                 {
-                    if (sheetInfos.Any(x => x.SheetName == ws.Name && x.IsSheetChecked))
+                    //Check if checked worksheet's name is contained in this workbook
+                    if (!worksheetDict.ContainsKey(worksheetInfo.SheetName))
+                        continue;
+
+                    //Get worksheet
+                    var ws = worksheetDict[worksheetInfo.SheetName];
+
+                    //Get start and end information
+                    uint fromPage = 1;
+                    uint toPage = (uint)ws.PageSetup.Pages.Count;
+                    if (worksheetInfo.StartPage > 0)
+                        fromPage = worksheetInfo.StartPage;
+                    if (worksheetInfo.EndPage > 0)
+                        toPage = worksheetInfo.EndPage;
+
+                    //Print to pdf
+                    if (!printSettings.PrintToPaper)
                     {
-                        var target = sheetInfos.First(x => x.SheetName == ws.Name && x.IsSheetChecked);
-                        uint fromPage = 1;
-                        uint toPage = (uint)ws.PageSetup.Pages.Count;
-                        if (target.StartPage > 0)
-                            fromPage = target.StartPage;
-                        if (target.EndPage > 0)
-                            toPage = target.EndPage;
-                        //Print to pdf
-                        if (!printSettings.PrintToPaper)
-                        {
-                            var pdfFilePath = exportFolderPath + "\\" + pdfNamePrefix + ws.Name + ".pdf";
-                            //ws.PrintOutEx(
-                            //    From: fromPage,
-                            //    To: toPage,
-                            //    ActivePrinter: printer,
-                            //    PrToFileName: pdfFilePath
-                            //    );
-                            ws.PrintOut(
-                                From: fromPage,
-                                To: toPage,
-                                ActivePrinter: printer,
-                                PrToFileName: pdfFilePath
-                                );
-                            result.PrintedPdfPaths.Add(pdfFilePath);
-                        }
-                        //Print to paper
-                        else
-                            ws.PrintOut(
-                               From: fromPage,
-                               To: toPage,
-                               ActivePrinter: printer
-                               );
+                        var pdfFilePath = exportFolderPath + "\\" + pdfNamePrefix + ws.Name + ".pdf";
+                        ws.PrintOut(
+                            From: fromPage,
+                            To: toPage,
+                            ActivePrinter: printer,
+                            PrToFileName: pdfFilePath
+                            );
+                        result.PrintedPdfPaths.Add(pdfFilePath);
                     }
+                    //Print to paper
+                    else
+                        ws.PrintOut(
+                           From: fromPage,
+                           To: toPage,
+                           ActivePrinter: printer
+                           );
+
                     if (cancelToken.IsCancellationRequested)
                         break;
                 }
+
+                //foreach (Worksheet ws in wb.Worksheets)
+                //{
+                //    if (sheetInfos.Any(x => x.SheetName == ws.Name && x.IsSheetChecked))
+                //    {
+                //        var target = sheetInfos.First(x => x.SheetName == ws.Name && x.IsSheetChecked);
+                //        uint fromPage = 1;
+                //        uint toPage = (uint)ws.PageSetup.Pages.Count;
+                //        if (target.StartPage > 0)
+                //            fromPage = target.StartPage;
+                //        if (target.EndPage > 0)
+                //            toPage = target.EndPage;
+                //        //Print to pdf
+                //        if (!printSettings.PrintToPaper)
+                //        {
+                //            var pdfFilePath = exportFolderPath + "\\" + pdfNamePrefix + ws.Name + ".pdf";  
+                //            ws.PrintOut(
+                //                From: fromPage,
+                //                To: toPage,
+                //                ActivePrinter: printer,
+                //                PrToFileName: pdfFilePath
+                //                );
+                //            result.PrintedPdfPaths.Add(pdfFilePath);
+                //        }
+                //        //Print to paper
+                //        else
+                //            ws.PrintOut(
+                //               From: fromPage,
+                //               To: toPage,
+                //               ActivePrinter: printer
+                //               );
+                //    }
+                //    if (cancelToken.IsCancellationRequested)
+                //        break;
+                //}
+
+                //Close workbook
                 wb.Close(SaveChanges: false);
             }
             catch { }
 
             return result;
         }
-
-
     }
 }

@@ -1,0 +1,154 @@
+﻿<Window x:Class="ExcelToPaper.Views.PrintSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ExcelToPaper.Views"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             xmlns:localDataConverters="clr-namespace:ExcelToPaper.DataConverters"
+             xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
+             mc:Ignorable="d" 
+             Height="400" Width="530" WindowStartupLocation="CenterScreen"
+             WindowStyle="None">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Material Design -->
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.Green.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Accent/MaterialDesignColor.Green.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <localDataConverters:BooleanNotGateDataConverter x:Key="BooleanNotGateDataConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <materialDesign:ColorZone Grid.Row="0" Mode="PrimaryDark" Padding="10"/>
+
+        <GroupBox Grid.Row="1" Margin="10" Header="出力設定" Style="{x:Null}" DataContext="{Binding PrintSettings}">
+            <StackPanel Orientation="Horizontal">
+                <materialDesign:PackIcon Kind="Printer" Margin="20 0 0 0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                <RadioButton Margin="0 0 10 0" VerticalAlignment="Center" GroupName="0" Content="紙印刷" 
+                             IsChecked="{Binding PrintToPaper}"/>
+                
+                <materialDesign:PackIcon Kind="FilePdf" Margin="20 0 0 0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                <RadioButton Margin="0 0 10 0" VerticalAlignment="Center" GroupName="0" Content="Pdf出力" 
+                             IsChecked="{Binding PrintToPdf}"/>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Grid.Row="2" Margin="10" Header="Pdf出力設定" Style="{x:Null}" DataContext="{Binding PrintSettings}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height=".5*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Folder" Margin="20 0 0 0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                    <RadioButton Margin="2 0 0 0" VerticalAlignment="Center" GroupName="1" Content="個別フォルダに出力する" 
+                                 IsChecked="{Binding ExportToSeparateFolder}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="FolderMultiple" Margin="20 0 0 0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                    <RadioButton Margin="2 0 0 0" VerticalAlignment="Center" GroupName="1" Content="一つフォルダに出力する" 
+                                 IsChecked="{Binding ExportToSingleFolder}"/>
+                </StackPanel>
+
+                <Grid Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Grid.ColumnSpan="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0" Style="{StaticResource MaterialDesignFilledTextFieldTextBox}"
+                                 HorizontalContentAlignment="Stretch"
+                                     Margin="10 0 0 0" VerticalAlignment="Center"  
+                                     Text="{Binding SingleFolderPath, UpdateSourceTrigger=PropertyChanged}"      
+                                     materialDesign:HintAssist.Hint="パス"
+                                     IsEnabled="{Binding ExportToSingleFolder}"/>
+
+
+                        <Button Grid.Column="1"
+                            Style="{DynamicResource MaterialDesignRaisedAccentButton}" 
+                                    Margin="10 0 0 0" Padding="0" 
+                                    VerticalAlignment="Center" Width="45" Height="28" Content="開く" 
+                                    Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}"
+                                    IsEnabled="{Binding ExportToSingleFolder}"
+                                    Foreground="White"/>
+
+                    </Grid>
+
+                    <CheckBox Grid.Row="1" Margin="10 10 10 0" VerticalAlignment="Center" 
+                                  Content="シート名の前にワークブック名付" 
+                                  IsChecked="{Binding AttachWorkbookNameBeforeWorksheet}" 
+                                  IsEnabled="{Binding ExportToSingleFolder}"
+                                  ToolTip="例:ワークブックはWorkbook.xlsx、シート名はSheet1、出力のPdf名はWorkbook_Sheet1.Pdf"/>
+                </Grid>
+            </Grid>                
+        </GroupBox>
+
+        <GroupBox Grid.Row="3" Margin="10" Header="Pdfマージ設定" Style="{x:Null}" DataContext="{Binding PrintSettings}">
+            <StackPanel Grid.Row="2" Orientation="Horizontal">
+                <materialDesign:PackIcon Kind="FileDocumentMultiple" Margin="20 0 0 0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                <RadioButton Margin="0 10 10 10" VerticalAlignment="Center" GroupName="2" Content="しない"
+                             IsChecked="{Binding MergeNothing}"/>
+                <materialDesign:PackIcon Kind="FileDocument" Margin="20 0 0 0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                <RadioButton Margin="0 10 10 10" VerticalAlignment="Center" GroupName="2" Content="一つPdfにマージする" 
+                             IsChecked="{Binding MergeToFileSeparately}"
+                             ToolTip="同じワークブックのシートを一つPdfにマージする。"/>
+                <CheckBox Margin="10 10 10 10" VerticalAlignment="Center" Content="マージ用のネタを削除する"
+                          IsChecked="{Binding MergeDeleteOriginFile}"
+                          IsEnabled="{Binding MergeToFileSeparately}"/>
+                <!--<RadioButton Margin="20 10 10 10" VerticalAlignment="Center" GroupName="2" Content="全てを一つPDFにマージする"
+                             IsChecked="{Binding MergeToSingleFile}"
+                             ToolTip="全てのワークブックのシートを一つPdfにマージする。"/>-->
+            </StackPanel>
+        </GroupBox>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Left" 
+                    Visibility="{Binding ShowErrorMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <materialDesign:PackIcon Kind="Warning" Margin="10 0 0 0" VerticalAlignment="Center" Foreground="Red"/>
+            <TextBlock Margin="10 0 0 0" VerticalAlignment="Center" Text="{Binding ErrorMessage}"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Style="{DynamicResource MaterialDesignRaisedAccentButton}" 
+                    Margin="10 0 10 0" Padding="0" 
+                    VerticalAlignment="Center" 
+                    Width="75" Content="Close" 
+                    Command="{Binding CloseCommand}"
+                    IsDefault="True"
+                    IsCancel="True"
+                    Foreground="White">
+                <Button.CommandParameter>
+                    <system:Boolean>True</system:Boolean>
+                </Button.CommandParameter>
+            </Button>
+            
+        </StackPanel>
+    </Grid>
+</Window>
