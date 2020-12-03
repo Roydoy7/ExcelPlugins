@@ -25,6 +25,18 @@ namespace ExcelToPaper.DataModels
                 return count;
             }
         }
+        public int SelectedPageCount
+        {
+            get
+            {
+                var count = 0;
+                foreach (var workbookInfo in this)
+                    foreach (var worksheetInfo in workbookInfo)
+                        if (worksheetInfo.IsWorksheetChecked)
+                            count += worksheetInfo.Count;
+                return count;
+            }
+        }
 
         public new event PropertyChangedEventHandler PropertyChanged;
 
@@ -40,6 +52,7 @@ namespace ExcelToPaper.DataModels
         public void OnWorksheetChecked()
         {
             NotifyPropertyChanged(nameof(SelectedWorksheetCount));
+            NotifyPropertyChanged(nameof(SelectedPageCount));
         }
     }
 }

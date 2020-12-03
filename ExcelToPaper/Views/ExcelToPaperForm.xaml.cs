@@ -16,11 +16,11 @@ using System.Windows.Shapes;
 namespace ExcelToPaper.Views
 {
     /// <summary>
-    /// ExcelToPaperGetDetailSelectionView.xaml 的交互逻辑
+    /// ExcelToPaperDetailForm.xaml 的交互逻辑
     /// </summary>
-    public partial class ExcelToPaperGetDetailSelectionView : UserControl
+    public partial class ExcelToPaperForm
     {
-        public ExcelToPaperGetDetailSelectionView()
+        public ExcelToPaperForm()
         {
             InitializeComponent();
         }

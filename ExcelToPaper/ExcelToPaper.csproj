@@ -178,7 +178,7 @@
     <Compile Include="AssemblyPath.cs" />
     <Compile Include="Commands\RibbonCommands.BatchToPaper.cs" />
     <Compile Include="Components\BitmapToImgSrcMethods.cs" />
-    <Compile Include="Components\CommonMethods.cs" />
+    <Compile Include="Components\CoreMethods.cs" />
     <Compile Include="Components\ExcelPrintMethods.cs" />
     <Compile Include="Components\LinqEx.cs" />
     <Compile Include="Components\PdfMethods.cs" />
@@ -199,21 +199,17 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ValidationRules\StringNullEmptyValidationRule.cs" />
-    <Compile Include="ViewModels\ExcelToPaperDetailFormViewModel.cs" />
+    <Compile Include="ViewModels\ExcelToPaperFormViewModel.cs" />
     <Compile Include="ViewModels\PrintSettingsViewModel.cs" />
     <Compile Include="ViewModels\PathFormViewModel.cs" />
-    <Compile Include="ViewModels\ExcelToPaperGetDetailSelectionViewModel.cs" />
-    <Compile Include="Views\ExcelToPaperDetailForm.xaml.cs">
-      <DependentUpon>ExcelToPaperDetailForm.xaml</DependentUpon>
+    <Compile Include="Views\ExcelToPaperForm.xaml.cs">
+      <DependentUpon>ExcelToPaperForm.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PrintSettingsView.xaml.cs">
       <DependentUpon>PrintSettingsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\PathForm.xaml.cs">
       <DependentUpon>PathForm.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\ExcelToPaperGetDetailSelectionView.xaml.cs">
-      <DependentUpon>ExcelToPaperGetDetailSelectionView.xaml</DependentUpon>
     </Compile>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -262,7 +258,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="Views\ExcelToPaperDetailForm.xaml">
+    <Page Include="Views\ExcelToPaperForm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -271,10 +267,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\PathForm.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ExcelToPaperGetDetailSelectionView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

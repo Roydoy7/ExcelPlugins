@@ -429,6 +429,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_66FE2F04DA88B2288DD396E0E99EB999"
+        "OwnerKey" = "8:_FC46A0E2B3EE40379815291452E5A66F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_69D9BF08BA5014E0F124ECC19372A312"
         "OwnerKey" = "8:_22E40C450702EC6C3BCD4DC976CB98B2"
         "MsmSig" = "8:_UNDEFINED"
@@ -454,12 +460,6 @@
         "Entry"
         {
         "MsmKey" = "8:_6D8084657B0EC7FF497AF27976AFD2C8"
-        "OwnerKey" = "8:_FC46A0E2B3EE40379815291452E5A66F"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_6E5CF040A1224C42CB68CFBD8C91F49A"
         "OwnerKey" = "8:_FC46A0E2B3EE40379815291452E5A66F"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -543,20 +543,20 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_8B3C8559C9D16F160BD70F444715EF26"
-        "OwnerKey" = "8:_22E40C450702EC6C3BCD4DC976CB98B2"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_8D2E6196DF60ADE0946F3EFD1217DEF6"
+        "MsmKey" = "8:_8A368310D8557CC376E49E5AC92BF23B"
         "OwnerKey" = "8:_490CBFC18E71214947B5FF5E058AEE9F"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_8D2E6196DF60ADE0946F3EFD1217DEF6"
+        "MsmKey" = "8:_8A368310D8557CC376E49E5AC92BF23B"
         "OwnerKey" = "8:_FC46A0E2B3EE40379815291452E5A66F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_8B3C8559C9D16F160BD70F444715EF26"
+        "OwnerKey" = "8:_22E40C450702EC6C3BCD4DC976CB98B2"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1180,7 +1180,7 @@
         "Entry"
         {
         "MsmKey" = "8:_B1BBBC4884CF53CD2BBC6E65865B73F3"
-        "OwnerKey" = "8:_6E5CF040A1224C42CB68CFBD8C91F49A"
+        "OwnerKey" = "8:_66FE2F04DA88B2288DD396E0E99EB999"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1690,13 +1690,7 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_490CBFC18E71214947B5FF5E058AEE9F"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_6E5CF040A1224C42CB68CFBD8C91F49A"
+        "OwnerKey" = "8:_66FE2F04DA88B2288DD396E0E99EB999"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -1708,7 +1702,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_8D2E6196DF60ADE0946F3EFD1217DEF6"
+        "OwnerKey" = "8:_490CBFC18E71214947B5FF5E058AEE9F"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_8A368310D8557CC376E49E5AC92BF23B"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -4307,6 +4307,37 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_66FE2F04DA88B2288DD396E0E99EB999"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:OpenXmlExcel, Version=1.0.2020.1113, Culture=neutral, PublicKeyToken=82570612f35ed993, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_66FE2F04DA88B2288DD396E0E99EB999"
+                    {
+                    "Name" = "8:OpenXmlExcel.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:OpenXmlExcel.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_77B37C7291D241D3AFAA5E3AC3692824"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_69D9BF08BA5014E0F124ECC19372A312"
             {
             "AssemblyRegister" = "3:1"
@@ -4445,37 +4476,6 @@
                     }
                 }
             "SourcePath" = "8:CommonWPFTools.dll"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_77B37C7291D241D3AFAA5E3AC3692824"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_6E5CF040A1224C42CB68CFBD8C91F49A"
-            {
-            "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:OpenXmlExcel, Version=1.0.2020.905, Culture=neutral, PublicKeyToken=628a437b6f45c20a, processorArchitecture=MSIL"
-                "ScatterAssemblies"
-                {
-                    "_6E5CF040A1224C42CB68CFBD8C91F49A"
-                    {
-                    "Name" = "8:OpenXmlExcel.dll"
-                    "Attributes" = "3:512"
-                    }
-                }
-            "SourcePath" = "8:OpenXmlExcel.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_77B37C7291D241D3AFAA5E3AC3692824"
@@ -4834,20 +4834,20 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8B3C8559C9D16F160BD70F444715EF26"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8A368310D8557CC376E49E5AC92BF23B"
             {
             "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:TRUE"
-            "AssemblyAsmDisplayName" = "8:System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_8B3C8559C9D16F160BD70F444715EF26"
+                    "_8A368310D8557CC376E49E5AC92BF23B"
                     {
-                    "Name" = "8:System.Net.Http.dll"
+                    "Name" = "8:Newtonsoft.Json.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:System.Net.Http.dll"
+            "SourcePath" = "8:Newtonsoft.Json.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_77B37C7291D241D3AFAA5E3AC3692824"
@@ -4865,20 +4865,20 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
-            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8D2E6196DF60ADE0946F3EFD1217DEF6"
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_8B3C8559C9D16F160BD70F444715EF26"
             {
             "AssemblyRegister" = "3:1"
-            "AssemblyIsInGAC" = "11:FALSE"
-            "AssemblyAsmDisplayName" = "8:Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL"
+            "AssemblyIsInGAC" = "11:TRUE"
+            "AssemblyAsmDisplayName" = "8:System.Net.Http, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_8D2E6196DF60ADE0946F3EFD1217DEF6"
+                    "_8B3C8559C9D16F160BD70F444715EF26"
                     {
-                    "Name" = "8:Newtonsoft.Json.dll"
+                    "Name" = "8:System.Net.Http.dll"
                     "Attributes" = "3:512"
                     }
                 }
-            "SourcePath" = "8:Newtonsoft.Json.dll"
+            "SourcePath" = "8:System.Net.Http.dll"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_77B37C7291D241D3AFAA5E3AC3692824"
@@ -7844,15 +7844,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:ExcelToPaperInstaller"
-        "ProductCode" = "8:{DA2E6869-2A8D-4730-B333-B5CE5C7365AD}"
-        "PackageCode" = "8:{982B5879-7DE3-4214-979F-CAE64F7B9D50}"
+        "ProductCode" = "8:{83C6FF86-C641-49DF-BB8B-F04AF4161A66}"
+        "PackageCode" = "8:{D1C02DDE-16B1-446C-AB40-2E7024E81C4C}"
         "UpgradeCode" = "8:{EB51900D-39D3-497A-BEB2-E809CCF467A1}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:2.0.1201"
+        "ProductVersion" = "8:2.0.1203"
         "Manufacturer" = "8:Ray"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"

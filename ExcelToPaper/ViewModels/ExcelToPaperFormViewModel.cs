@@ -5,7 +5,6 @@ using ExcelToPaper.Components;
 using ExcelToPaper.DataModels;
 using ExcelToPaper.Views;
 using Microsoft.Office.Interop.Excel;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing.Printing;
@@ -14,15 +13,19 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Win = System.Windows;
 
 namespace ExcelToPaper.ViewModels
 {
-    internal class ExcelToPaperDetailFormViewModel : ViewModelBase<ExcelToPaperDetailForm>
+    internal class ExcelToPaperFormViewModel : ViewModelBase<ExcelToPaperForm>
     {
+        #region Fileds
         private bool mSelectAllSheet;
+        #endregion
 
-        public ExcelToPaperDetailFormViewModel()
+        #region Constructors
+        public ExcelToPaperFormViewModel()
         {
             //Set default printer
             var printSettings = new PrinterSettings();
@@ -36,6 +39,9 @@ namespace ExcelToPaper.ViewModels
             PagePreviewExtractor.UpdateStatus = UpdateProgressMessage;
 
         }
+        #endregion
+
+        #region Properties
         public static Application ExcelPrint { get; private set; }
 
         public bool SelectAllSheet
@@ -52,23 +58,12 @@ namespace ExcelToPaper.ViewModels
         }
         public bool ShowPreviewProgressBar { get; set; }
         public bool ShowProgressBar { get; set; }
+        public int SheetCount { get; set; }
+        public int PageCount { get; set; }
         public string Keyword { get; set; } = "";
         public string SelectedPrinter { get; set; }
+        public string PrintButtonBadge { get; set; } = "Pdf";
         public string ProgressMessage { get; set; }
-
-        public string SelectedSheetMessage
-        {
-            get
-            {
-                var cnt = 0;
-                foreach (var workbookInfo in WorkbookInfos)
-                    foreach (var worksheetInfo in workbookInfo.WorksheetInfos)
-                        if (worksheetInfo.IsWorksheetChecked)
-                            cnt++;
-
-                return $"選択されたシート数: {cnt}";
-            }
-        }
 
         public CancellationTokenSource CancelTokenSourcePrint { get; private set; }
         public CancellationTokenSource CancelTokenSourceOther { get; private set; } = new CancellationTokenSource();
@@ -90,13 +85,17 @@ namespace ExcelToPaper.ViewModels
                 return printerList;
             }
         }
+        #endregion
+
+        #region Commands
 
         public ICommand OnWindowClosing => new DelegateCommand((o) =>
         {
             CancelTokenSourceOther.Cancel();
         });
 
-        public ICommand AddFromFolderCommand => new DelegateCommand((o) =>
+
+        public ICommand AddFromFolderCommand => new DelegateCommand(async (o) =>
         {
             var vm = new PathFormViewModel();
             vm.View.ShowDialog();
@@ -116,44 +115,29 @@ namespace ExcelToPaper.ViewModels
             //Show progress bar
             ShowProgressBar = true;
 
-            //Create a dictionary from old data
-            var existWorkbookinfos = new ConcurrentDictionary<string, WorkbookInfo>(WorkbookInfos.ToDictionary(x => x.FilePath, y => y));
+            //Get file paths
+            var filePaths = CoreMethods.GetExcelPath(folderPath);
+            //Create workbookinfos
+            var newWorkbookInfos = CreateWorkbookInfo(filePaths);
+            //Exclude existing filepaths
+            var extractedWorkbookInfos = ExtractNewWorkbookInfos(WorkbookInfos, newWorkbookInfos);
 
-            //Get worksheet names from excel workbooks parallelly.
-            var filePaths = CommonMethods.GetExcelPath(folderPath);
-            var workbookInfos = new BlockingCollection<WorkbookInfo>();
-            Parallel.ForEach(filePaths, filePath =>
-            {
-                //If already exist in the old data, ignore
-                if (existWorkbookinfos.ContainsKey(filePath))
-                    return;
-                var workbookInfo = new WorkbookInfo { FilePath = filePath };
-                foreach (var sheetName in CommonMethods.GetWorksheetNames(filePath))
-                    workbookInfo.Add(
-                        new WorksheetInfo { WorkbookInfo = workbookInfo, SheetName = sheetName });
-                workbookInfos.Add(workbookInfo);
-            });
-
-            //If no new data, return
-            if (!workbookInfos.Any())
-            {
-                ShowProgressBar = false;
-                return;
-            }
-
-            //Copy to window view model.
-            foreach (var workbookInfo in workbookInfos)
+            //Add to UI first
+            foreach (var workbookInfo in extractedWorkbookInfos)
                 WorkbookInfos.Add(workbookInfo);
 
+            //Get worksheet names
+            await GetWorksheetName(extractedWorkbookInfos);
+
+            //Hide progress bar
             ShowProgressBar = false;
 
             //Read page count and size
-            PageSizeCountExtractor.GetPageCountSize(workbookInfos);
+            PageSizeCountExtractor.GetPageCountSize(extractedWorkbookInfos);
         });
 
-        public ICommand AddFilePathCommand => new DelegateCommand((o) =>
+        public ICommand AddFilePathCommand => new DelegateCommand(async (o) =>
         {
-            var workbookInfos = new BlockingCollection<WorkbookInfo>();
             var filePaths = new List<string>();
             foreach (var filePath in FileBrowser.BrowseExcelFile(true))
                 filePaths.Add(filePath);
@@ -172,36 +156,29 @@ namespace ExcelToPaper.ViewModels
             //Show progress bar
             ShowProgressBar = true;
 
-            Parallel.ForEach(filePaths, filePath =>
-            {
-                if (WorkbookInfos.Any(x => x.FilePath == filePath))
-                    return;
-                else
-                {
-                    var workbookInfo = new WorkbookInfo { FilePath = filePath };
-                    foreach (var sheetName in CommonMethods.GetWorksheetNames(filePath))
-                        workbookInfo.Add(
-                            new WorksheetInfo { WorkbookInfo = workbookInfo, SheetName = sheetName });
+            //Create workbookinfos
+            var newWorkbookInfos = CreateWorkbookInfo(filePaths);
+            //Exclude existing filepaths
+            var extractedWorkbookInfos = ExtractNewWorkbookInfos(WorkbookInfos, newWorkbookInfos);
 
-                    workbookInfos.Add(workbookInfo);
-                }
-            });
-
-            //Copy to window view model.
-            foreach (var workbookInfo in workbookInfos)
+            //Add to UI first
+            foreach (var workbookInfo in extractedWorkbookInfos)
                 WorkbookInfos.Add(workbookInfo);
+
+            //Get worksheet names
+            await GetWorksheetName(extractedWorkbookInfos);
 
             //Show progress bar
             ShowProgressBar = false;
 
             //Read page count and size
-            PageSizeCountExtractor.GetPageCountSize(workbookInfos);
+            PageSizeCountExtractor.GetPageCountSize(extractedWorkbookInfos);
         });
 
         //On select changed of the first listview, update the datasource of the second listview.
         public ICommand WorkbookInfoSelectionChanged => new DelegateCommand((o) =>
         {
-            if (SelectedWorkbookInfo != null)
+            if (SelectedWorkbookInfo != null && SelectedWorkbookInfo.WorksheetInfos.Count != 0)
             {
                 SelectedWorksheetInfo = SelectedWorkbookInfo.WorksheetInfos.ElementAt(0);
                 if (SelectedWorkbookInfo.Any(x => x.IsWorksheetChecked))
@@ -335,6 +312,7 @@ namespace ExcelToPaper.ViewModels
             vm.View.ShowDialog();
             PrintSettings.Copy(vm.PrintSettings);
             PrintSettings.NofityAllPropertyChanged();
+            UpdatePrintButtonBadge();
         });
 
         public ICommand PreviewCommand => new DelegateCommand(async (o) =>
@@ -420,11 +398,55 @@ namespace ExcelToPaper.ViewModels
             //Hide progressbar
             ShowProgressBar = false;
         });
+        #endregion
+
+        #region Private methods
+        private IEnumerable<WorkbookInfo> CreateWorkbookInfo(IEnumerable<string> filePaths)
+        {
+            var workbookInfos = new List<WorkbookInfo>();
+            foreach (var filePath in filePaths)
+                workbookInfos.Add(new WorkbookInfo { FilePath = filePath });
+            return workbookInfos;
+        }
+        private IEnumerable<WorkbookInfo> ExtractNewWorkbookInfos(IList<WorkbookInfo> existWorkbookInfos, IEnumerable<WorkbookInfo> newWorkbookInfos)
+        {
+            var workbookInfos = new List<WorkbookInfo>();
+            var existWorkbookInfoDict = existWorkbookInfos.ToDictionary(k => k.FilePath, v => v);
+            foreach (var workbookInfo in newWorkbookInfos)
+                if (!existWorkbookInfoDict.ContainsKey(workbookInfo.FilePath))
+                    workbookInfos.Add(workbookInfo);
+            return workbookInfos;
+        }
+        private async Task<IEnumerable<WorkbookInfo>> GetWorksheetName(IEnumerable<WorkbookInfo> workbookInfos)
+        {
+            var dispatcher = Dispatcher.CurrentDispatcher;
+            await Task.Run(() =>
+            {
+                Parallel.ForEach(workbookInfos, workbookInfo =>
+                {
+                    foreach (var sheetName in workbookInfo.GetWorksheetNames())
+                        dispatcher.Invoke(() =>
+                        {
+                            workbookInfo.Add(new WorksheetInfo { WorkbookInfo = workbookInfo, SheetName = sheetName });
+                        });
+                });
+            });
+
+            return workbookInfos;
+        }
 
         private void UpdateProgressMessage(string message)
         {
             ProgressMessage = message;
         }
 
+        private void UpdatePrintButtonBadge()
+        {
+            if (PrintSettings.PrintToPdf)
+                PrintButtonBadge = "Pdf";
+            else
+                PrintButtonBadge = "Paper";
+        }
+        #endregion
     }
 }

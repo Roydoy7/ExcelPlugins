@@ -4,50 +4,75 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-
 
 namespace ExcelToPaper.Components
 {
     //This class is used to obtain worksheets' page count and size inside a workbook
     internal class WorkbookPageSizeCountExtractor
     {
+        #region Properties
         //Excel application
         private static Application ExcelPageCountSize1 { get; set; }
         private static Application ExcelPageCountSize2 { get; set; }
+
         //Task status indicator
         public bool Task1Runing { get; private set; }
+
         public bool Task2Runing { get; private set; }
+
         //Two queue used to store tasks
         public ConcurrentQueue<Task> PageSizeCountTaskQueue1 { get; private set; } = new ConcurrentQueue<Task>();
+
         public ConcurrentQueue<Task> PageSizeCountTaskQueue2 { get; private set; } = new ConcurrentQueue<Task>();
         public CancellationToken CancellationToken { get; private set; }
+
         //Update status function injected from outside
         public Action<string> UpdateStatus { get; set; }
+        #endregion
+
+        #region Constructors
         public WorkbookPageSizeCountExtractor(CancellationToken cancellationToken)
         {
             CancellationToken = cancellationToken;
         }
+
         ~WorkbookPageSizeCountExtractor()
         {
             if (ExcelPageCountSize1 != null)
             {
-                ExcelPageCountSize1.Workbooks.Close();
-                ExcelPageCountSize1.Quit();
+                //ExcelPageCountSize1.Workbooks.Close();
+                try
+                {
+                    ExcelPageCountSize1.Quit();
+                    Marshal.ReleaseComObject(ExcelPageCountSize1);
+                }
+                catch { }
                 ExcelPageCountSize1 = null;
             }
             if (ExcelPageCountSize2 != null)
             {
-                ExcelPageCountSize2.Workbooks.Close();
-                ExcelPageCountSize2.Quit();
+                //ExcelPageCountSize2.Workbooks.Close();
+                try
+                {
+                    ExcelPageCountSize2.Quit();
+                    Marshal.ReleaseComObject(ExcelPageCountSize2);
+                }
+                catch { }
                 ExcelPageCountSize2 = null;
             }
         }
+        #endregion
+
+        #region Public methods
+        //Used to set a new cancel token from outside
         public void SetCancelToken(CancellationToken cancellationToken)
         {
             CancellationToken = cancellationToken;
         }
+
         //public glue method
         public async void GetPageCountSize(IEnumerable<WorkbookInfo> workbookInfos)
         {
@@ -55,7 +80,9 @@ namespace ExcelToPaper.Components
             EnqueuePageCountSizeTask(workbookInfos);
             ExecuteQueue();
         }
+        #endregion
 
+        #region Private methods
         //Start two excels
         private async Task StartExcelPageCountSize()
         {
@@ -160,8 +187,10 @@ namespace ExcelToPaper.Components
         //Genuine method
         private async Task GetPageCountAndSize(Application excel, WorkbookInfo workbookInfo)
         {
-            await CommonMethods.GetWorksheetPageCount(excel, workbookInfo.FilePath, workbookInfo.WorksheetInfos, CancellationToken, UpdateStatus);
-            workbookInfo.IsWorksheetPageCountSizeObtained = true;
+            var result = await workbookInfo.GetWorksheetPageCountAndSize(excel, CancellationToken, UpdateStatus);
+            if (result)
+                workbookInfo.IsWorksheetPageCountSizeObtained = true;
         }
+        #endregion
     }
 }

@@ -15,7 +15,7 @@ namespace ExcelToPaper.Commands
         public static void BatchPrint()
         {
             //Show dialog
-            var vm = new ExcelToPaperDetailFormViewModel();
+            var vm = new ExcelToPaperFormViewModel();
             vm.View.ShowDialog();
 
             //var folderPath = ShowExcelToPaperForm();
